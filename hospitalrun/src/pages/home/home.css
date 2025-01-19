@@ -1,0 +1,30 @@
+.home-container {
+    display: flex;
+    height: 100vh;
+}
+
+.home-container > div:first-child {
+    width: 250px;
+    color: white;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #f4f4f4;
+}
+
+.main-content > .header {
+    height: 60px;
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}

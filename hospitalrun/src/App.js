@@ -1,13 +1,20 @@
-import React from 'react'
-import SidebarComp from './components/Sidebar'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import SidebarComp from './components/Sidebar';
 
-//halo
+import ViewSchedule from './pages/schedule/ViewSchedule';
+import Home from './pages/home/Home';
+
 const App = () => {
   return (
-    <div>
-      <SidebarComp />
-    </div>
-  )
-}
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/view-schedules" element={<ViewSchedule />} />
+      </Routes>
 
-export default App
+    </Router>
+  );
+};
+
+export default App;

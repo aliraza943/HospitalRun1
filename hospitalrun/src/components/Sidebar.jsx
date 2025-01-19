@@ -2,9 +2,10 @@ import React from 'react';
 import { Sidebar, Menu, MenuItem, SubMenu } from 'react-pro-sidebar';
 import { myLogo } from '../assets/images';
 import './../styles/sidebar.css'
+import { Link } from 'react-router-dom';
 const SidebarComp = () => {
     return (
-        <div >
+        <div className='mainContainer' >
             <Sidebar
                 className="sidebar"
             >
@@ -14,11 +15,16 @@ const SidebarComp = () => {
                     className="sidebar-logo"
                 />
                 <Menu  >
-                    <MenuItem> Home </MenuItem>
-                    <SubMenu label="Schedule" >
-                        <MenuItem> View My Schedule </MenuItem>
-                        <MenuItem> Set My Availability </MenuItem>
-
+                    <MenuItem>
+                        <Link to="/">Home</Link>
+                    </MenuItem>
+                    <SubMenu label="Schedule">
+                        <MenuItem>
+                            <Link to="/view-schedules">View My Schedule</Link> {/* Add link for View My Schedule */}
+                        </MenuItem>
+                        <MenuItem>
+                            <Link to="/set-availability">Set My Availability</Link> {/* Add link for Set My Availability */}
+                        </MenuItem>
                     </SubMenu>
                     <SubMenu label="Clientele">
                         <MenuItem> View Clients </MenuItem>

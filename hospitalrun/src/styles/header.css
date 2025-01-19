@@ -1,0 +1,17 @@
+.header {
+    background-color: #E2EFF3;
+    width: 100%;
+    height: 60px;
+
+    /* Flexbox for alignment */
+    display: flex;
+    justify-content: flex-end; /* Aligns to the right */
+    align-items: center; /* Centers vertically */
+    padding-right: 20px; /* Adds space on the right */
+}
+
+.header .icon {
+    font-size: 30px; /* Makes the icon bigger */
+    color: #333; /* Optional: Add a color */
+    cursor: pointer; /* Optional: Pointer cursor for interactivity */
+}
