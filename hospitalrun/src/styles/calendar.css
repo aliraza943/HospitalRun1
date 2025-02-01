@@ -1,0 +1,44 @@
+.calendar-container {
+    max-width: 1000px;
+    margin: auto;
+    padding: 20px;
+    background: #ffffff;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Big Calendar Custom Styling */
+.rbc-calendar {
+    border-radius: 10px;
+}
+
+.rbc-toolbar {
+    background-color: #007bff;
+    color: white;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.rbc-toolbar button {
+    background: white;
+    border: none;
+    padding: 8px 12px;
+    margin: 0 5px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.rbc-toolbar button:hover {
+    background: #ddd;
+}
+
+.rbc-event {
+    background-color: #28a745 !important;
+    border-radius: 4px;
+}
