@@ -17,7 +17,7 @@ const AddServiceForm = () => {
         const { name, value } = e.target;
         setService((prev) => ({ ...prev, [name]: value }));
     };
-
+    console.log("data")
     // Submit form data to backend
     const handleSubmit = async (e) => {
         e.preventDefault();
