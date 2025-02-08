@@ -7,7 +7,7 @@ const AddStaffForm = () => {
         email: "",
         phone: "",
         role: "barber",
-        workingHours: "",
+       
         permissions: [],
     });
 

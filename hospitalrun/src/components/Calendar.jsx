@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import format from "date-fns/format";
@@ -6,107 +7,376 @@ import parse from "date-fns/parse";
 import startOfWeek from "date-fns/startOfWeek";
 import getDay from "date-fns/getDay";
 import { enUS } from "date-fns/locale";
-import { Modal, Button, Alert } from "react-bootstrap";
+import { addHours, parse as parseDate } from "date-fns";
 
 const locales = { "en-US": enUS };
 const localizer = dateFnsLocalizer({
-    format,
-    parse,
-    startOfWeek,
-    getDay,
-    locales,
+  format,
+  parse,
+  startOfWeek: (date) => startOfWeek(date, { weekStartsOn: 0 }),
+  getDay,
+  locales,
 });
 
+// Helper to convert day name to a Date in the current week
+const getDateForDay = (dayName, baseDate) => {
+  const dayIndex = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ].indexOf(dayName);
+  const start = startOfWeek(baseDate, { weekStartsOn: 0 });
+  start.setDate(start.getDate() + dayIndex);
+  return start;
+};
+
+// Parse a time string (e.g., "9:00 AM") to a Date using the baseDate for the day
+const parseTimeToDate = (timeStr, baseDate) => {
+  return parseDate(timeStr, "h:mm a", baseDate);
+};
+
 const MyCalendar = () => {
-    const [events, setEvents] = useState([
-        {
-            title: "Lunch Break",
-            start: new Date(2025, 0, 20, 13, 0),
-            end: new Date(2025, 0, 20, 14, 0),
-            status: "blocked",
-        },
-        {
-            title: "Haircut - John Doe",
-            start: new Date(2025, 0, 20, 11, 0),
-            end: new Date(2025, 0, 20, 12, 0),
-            status: "appointment",
-        },
-    ]);
+  const location = useLocation();
+  const staff = location.state?.staff;
+  const [schedule, setSchedule] = useState(null);
+  const [missingEvents, setMissingEvents] = useState([]);
+  const [workingEvents, setWorkingEvents] = useState([]);
+  const [fetchedWorkingEvents, setFetchedWorkingEvents] = useState([]);
 
-    const [modalOpen, setModalOpen] = useState(false);
-    const [selectedSlot, setSelectedSlot] = useState(null);
-    const [warning, setWarning] = useState(false);
 
-    const handleSelectSlot = (slotInfo) => {
-        const startHour = slotInfo.start.getHours();
-        if (startHour < 10 || startHour >= 17) {
-            setWarning(true);
+  // Function to generate "missing" (non-working) event slots based on API schedule
+  const generateMissingEvents = (apiSchedule) => {
+    const baseDate = new Date(); // Reference for the current week
+    const events = [];
+
+    Object.entries(apiSchedule).forEach(([day, workingHours]) => {
+      const dayDate = getDateForDay(day, baseDate);
+
+      if (!workingHours) {
+        // Block the entire day with a single event from 12:00 AM to 11:59 PM
+        events.push({
+          title: "Not working hours",
+          start: parseTimeToDate("12:00 AM", dayDate),
+          end: parseTimeToDate("11:59 PM", dayDate),
+        });
+        return;
+      }
+
+      // Parse and sort working hour slots by start time
+      const sortedSlots = workingHours
+        .map((slot) => {
+          const [startStr, endStr] = slot.split(" - ");
+          return {
+            start: parseTimeToDate(startStr, dayDate),
+            end: parseTimeToDate(endStr, dayDate),
+          };
+        })
+        .sort((a, b) => a.start - b.start);
+
+      // Check for gaps before, between, and after working hour slots
+      let previousEnd = parseTimeToDate("12:00 AM", dayDate);
+      sortedSlots.forEach((slot) => {
+        if (slot.start > previousEnd) {
+          events.push({
+            title: "Not working hours",
+            start: previousEnd,
+            end: slot.start,
+          });
         }
-        setSelectedSlot(slotInfo);
-        setModalOpen(true);
+        previousEnd = slot.end > previousEnd ? slot.end : previousEnd;
+      });
+
+      // After the last slot until end of day (11:59 PM)
+      const endOfDay = parseTimeToDate("11:59 PM", dayDate);
+      if (previousEnd < endOfDay) {
+        events.push({
+          title: "Not working hours",
+          start: previousEnd,
+          end: endOfDay,
+        });
+      }
+    });
+
+    return events;
+  };
+
+  // Fetch schedule from the API on component mount
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/api/workhours/get-schedule");
+        const data = await res.json();
+        if (res.ok && data.schedule) {
+          setSchedule(data.schedule);
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+      }
     };
 
-    const handleSelectEvent = (event) => {
-        alert(`Opening appointment: ${event.title}`);
+    fetchSchedule();
+  }, []);
+
+  useEffect(() => {
+    const fetchStaffData = async () => {
+      if (!staff?._id) return;
+
+      try {
+        const res = await fetch(`http://localhost:8080/api/staff/${staff._id}`);
+        const data = await res.json();
+
+        if (res.ok) {
+          console.log("Staff Data:", data); // ✅ Log the response
+        } else {
+          console.error("Error fetching staff data:", data);
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+      }
     };
 
-    const handleCloseModal = () => {
-        setModalOpen(false);
-        setWarning(false);
-    };
+    fetchStaffData();
+  }, [staff]);
 
-    return (
-        <div>
-            <h1>Employee Schedule</h1>
-            <Calendar
-                localizer={localizer}
-                events={events}
-                defaultView="week"
-                views={["week"]}
-                selectable
-                onSelectSlot={handleSelectSlot}
-                onSelectEvent={handleSelectEvent}
-                min={new Date(2025, 0, 20, 9, 0)} // Business hours start
-                max={new Date(2025, 0, 20, 21, 0)} // Business hours end
-                style={{ height: 600 }}
-            />
-            {modalOpen && (
-                <Modal show onHide={handleCloseModal}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>
-                            {warning ? "Non-Working Hours Warning" : "New Appointment"}
-                        </Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        {warning && (
-                            <Alert variant="warning">
-                                This time slot is outside of working hours.
-                            </Alert>
-                        )}
-                        <p>
-                            Selected time: {format(selectedSlot.start, "hh:mm a")} -{" "}
-                            {format(selectedSlot.end, "hh:mm a")}
-                        </p>
-                        {/* Add form elements for appointment creation here */}
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={handleCloseModal}>
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={() => {
-                                // Logic to add an appointment
-                                setModalOpen(false);
-                            }}
-                        >
-                            Save Appointment
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-            )}
-        </div>
+  // Update missing events when the schedule is loaded
+  useEffect(() => {
+    if (schedule) {
+      const events = generateMissingEvents(schedule);
+      setMissingEvents(events);
+    }
+  }, [schedule]);
+
+  // Handler for selecting a slot by clicking and dragging on the calendar
+  const handleSelectSlot = async (slotInfo) => {
+    const { start, end } = slotInfo;
+  
+    if (!schedule || !staff?._id) {
+      alert("Schedule or staff data not loaded.");
+      return;
+    }
+  
+    // Check for client-side overlaps
+    const isOverlapping = workingEvents.some(
+      (event) => start < event.end && end > event.start
     );
+    if (isOverlapping) {
+      alert("Time slot occupied.");
+      return;
+    }
+  
+    const title = window.prompt("Enter event title:", "Working Event");
+    if (!title || title !== "Working Event") return;
+  
+    try {
+      const newEvent = { title, start, end };
+      console.log("New working event created:", newEvent);
+  
+      // Update state and ensure the latest copy is used
+      setWorkingEvents((prev) => {
+        const updatedEvents = [...prev, newEvent];
+        console.log("Updated working events:", updatedEvents);
+  
+        // Convert to the schedule format
+        const updatedSchedule = mapEventsToSchedule(updatedEvents);
+        console.log("Updated schedule:", updatedSchedule);
+  
+        return updatedEvents; // Ensure state is properly updated
+      });
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Update failed. Check console for details.");
+    }
+  };
+  
+  // Function to format events into the desired structure
+  const formatTime = (date) => {
+    const options = { hour: "numeric", minute: "2-digit", hour12: true };
+    return new Intl.DateTimeFormat("en-US", options).format(date);
+  };
+  
+  const mapEventsToSchedule = (events) => {
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const schedule = daysOfWeek.reduce((acc, day) => ({ ...acc, [day]: null }), {});
+  
+    events.forEach(({ start, end }) => {
+      const day = daysOfWeek[start.getDay()];
+      const timeRange = `${formatTime(start)} - ${formatTime(end)}`;
+  
+      if (!schedule[day]) {
+        schedule[day] = [timeRange];
+      } else {
+        schedule[day].push(timeRange);
+      }
+    });
+  
+    return schedule;
+  };
+  const handleSelectEvent = async (event) => {
+    if (event.title !== "Working Event") return;
+  
+    const confirmDelete = window.confirm("Do you want to remove this working event?");
+    if (!confirmDelete) return;
+  
+    const updatedEvents = workingEvents.filter((e) => e.start !== event.start || e.end !== event.end);
+    
+    setWorkingEvents(updatedEvents); // Update state
+  
+    try {
+      await updateScheduleAPI(updatedEvents); // Update the backend
+      console.log("Event successfully removed and schedule updated.");
+    } catch (error) {
+      console.error("Failed to update after deleting event:", error);
+    }
+  };
+  
+  
+  // Track changes in workingEvents using useEffect
+  useEffect(() => {
+    if (workingEvents.length > 0) {
+      updateScheduleAPI(workingEvents);
+    }
+  }, [workingEvents]);
+  const updateScheduleAPI = async (updatedEvents) => {
+    if (!staff?._id) {
+      console.error("Staff ID is missing.");
+      return;
+    }
+  
+    const updatedSchedule = mapEventsToSchedule(updatedEvents);
+    const apiUrl = `http://localhost:8080/api/staff/update-schedule/${staff._id}`;
+  
+    try {
+      const response = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ schedule: updatedSchedule }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+  
+      const result = await response.json();
+      console.log("Schedule successfully updated:", result);
+    } catch (error) {
+      console.error("Failed to update schedule:", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchWorkingEvents = async () => {
+      console.log("THE STAFF ID IS", staff._id);
+      try {
+        const res = await fetch(`http://localhost:8080/api/staff/schedule/${staff._id}`);
+        const data = await res.json();
+        console.log("THIS WAS THE DATA", data.schedule);
+  
+        if (res.ok && data.schedule) {
+          const baseDate = new Date();
+          const formattedEvents = Object.entries(data.schedule) // Convert object to an array
+            .flatMap(([day, slots]) => {
+              if (!slots || slots.length === 0) return []; // Skip null or empty slots
+  
+              const dayDate = getDateForDay(day, baseDate);
+              return slots.map((slot) => {
+                const [startStr, endStr] = slot.split(" - ");
+                return {
+                  title: "Working Event",
+                  start: parseTimeToDate(startStr, dayDate),
+                  end: parseTimeToDate(endStr, dayDate),
+                };
+              });
+            });
+  
+          setFetchedWorkingEvents(formattedEvents);
+        }
+      } catch (err) {
+        console.error("Error fetching working events:", err);
+      }
+    };
+  
+    fetchWorkingEvents();
+  }, []);
+  
+  
+
+  
+  // Combine missing and working events for display on the calendar.
+  const events = [...missingEvents, ...workingEvents,...fetchedWorkingEvents];
+
+  return (
+    <div>
+      <h1>Schedule for {staff?.name || "Staff Member"}</h1>
+
+      {/* Display list of working events */}
+      <h2>Working Events List</h2>
+      <ul>
+        {workingEvents.map((event, index) => (
+          <li key={index}>
+            {event.title}: {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
+          </li>
+        ))}
+      </ul>
+
+      {/* Inline CSS to override default react-big-calendar styles */}
+      <style>{`
+        .rbc-event {
+          background-color: transparent !important;
+        }
+        .not-working-event {
+          background-color: #d3d3d3 !important;
+          border-radius: 4px;
+          color: #000 !important;
+          border: none;
+          padding: 5px;
+        }
+        .working-event {
+          background-color: #0080ff !important;
+          border-radius: 4px;
+          color: #000 !important;
+          border: none;
+          padding: 5px;
+        }
+      `}</style>
+
+      <Calendar
+        localizer={localizer}
+        events={events}
+        defaultView="week"
+        views={["week"]}
+        step={60}
+        timeslots={1}
+        onSelectEvent={handleSelectEvent}
+        selectable
+        onSelectSlot={handleSelectSlot}
+        formats={{
+          dayFormat: "EEEE",
+          timeGutterFormat: "ha",
+        }}
+        style={{ height: 600 }}
+        eventPropGetter={(event) => {
+          const isMissing = event.title === "Not working hours";
+          const backgroundColor = isMissing ? "#d3d3d3" : "#0080ff";
+          return {
+            style: {
+              backgroundColor,
+              borderRadius: "4px",
+              color: "#000",
+              border: "none",
+              padding: "5px",
+            },
+            className: isMissing ? "not-working-event" : "working-event",
+          };
+        }}
+      />
+    </div>
+  );
 };
 
 export default MyCalendar;

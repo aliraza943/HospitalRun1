@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaCalendarAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const ViewStaffComp = () => {
     const [staffList, setStaffList] = useState([]);
@@ -14,6 +15,7 @@ const ViewStaffComp = () => {
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const navigate = useNavigate(); // ✅ For navigation
 
     useEffect(() => {
         fetch("http://localhost:8080/api/staff")
@@ -63,6 +65,10 @@ const ViewStaffComp = () => {
         }
     };
 
+    const handleSchedule = (staff) => {
+        navigate("/view-schedules", { state: { staff } }); // ✅ Pass staff data to Schedule page
+    };
+
     return (
         <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Staff List</h2>
@@ -97,6 +103,12 @@ const ViewStaffComp = () => {
                                 >
                                     <FaTrash />
                                 </button>
+                                <button
+                                    onClick={() => handleSchedule(staff)}
+                                    className="text-green-500 text-lg"
+                                >
+                                    <FaCalendarAlt />
+                                </button>
                             </td>
                         </tr>
                     ))}
@@ -107,7 +119,7 @@ const ViewStaffComp = () => {
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
                     <div className="bg-white p-6 rounded shadow-lg w-1/3">
-                        <h3 className="text-xl  font-semibold mb-4">Edit Staff</h3>
+                        <h3 className="text-xl font-semibold mb-4">Edit Staff</h3>
                         <form onSubmit={handleUpdate} className="space-y-4">
                             <input
                                 type="text"
