@@ -160,7 +160,7 @@ const MyCalendar = () => {
     }
   
     // Check for client-side overlaps
-    const isOverlapping = workingEvents.some(
+    const isOverlapping = events.some(
       (event) => start < event.end && end > event.start
     );
     if (isOverlapping) {
@@ -168,7 +168,7 @@ const MyCalendar = () => {
       return;
     }
   
-    const title = window.prompt("Enter event title:", "Working Event");
+    const title ="Working Event"
     if (!title || title !== "Working Event") return;
   
     try {
@@ -221,12 +221,16 @@ const MyCalendar = () => {
     const confirmDelete = window.confirm("Do you want to remove this working event?");
     if (!confirmDelete) return;
   
-    const updatedEvents = workingEvents.filter((e) => e.start !== event.start || e.end !== event.end);
-    
-    setWorkingEvents(updatedEvents); // Update state
+    setWorkingEvents((prevEvents) =>
+      prevEvents.filter((e) => e.start !== event.start || e.end !== event.end)
+    );
+  
+    setFetchedWorkingEvents((prevFetchedEvents) =>
+      prevFetchedEvents.filter((e) => e.start !== event.start || e.end !== event.end)
+    );
   
     try {
-      await updateScheduleAPI(updatedEvents); // Update the backend
+      await updateScheduleAPI(workingEvents); // Update the backend
       console.log("Event successfully removed and schedule updated.");
     } catch (error) {
       console.error("Failed to update after deleting event:", error);
@@ -234,19 +238,16 @@ const MyCalendar = () => {
   };
   
   
+  
   // Track changes in workingEvents using useEffect
-  useEffect(() => {
-    if (workingEvents.length > 0) {
-      updateScheduleAPI(workingEvents);
-    }
-  }, [workingEvents]);
-  const updateScheduleAPI = async (updatedEvents) => {
+  const updateScheduleAPI = async (combinedEvents) => {
     if (!staff?._id) {
       console.error("Staff ID is missing.");
       return;
     }
   
-    const updatedSchedule = mapEventsToSchedule(updatedEvents);
+    // Convert combined events to the schedule format.
+    const updatedSchedule = mapEventsToSchedule(combinedEvents);
     const apiUrl = `http://localhost:8080/api/staff/update-schedule/${staff._id}`;
   
     try {
@@ -268,7 +269,15 @@ const MyCalendar = () => {
       console.error("Failed to update schedule:", error);
     }
   };
-
+  
+  // useEffect now depends on both workingEvents and fetchedWorkingEvents.
+  // It combines them and sends the updated schedule to the backend.
+  useEffect(() => {
+    const combinedEvents = [...workingEvents, ...fetchedWorkingEvents];
+    if (combinedEvents.length > 0) {
+      updateScheduleAPI(combinedEvents);
+    }
+  }, [workingEvents, fetchedWorkingEvents]);
   useEffect(() => {
     const fetchWorkingEvents = async () => {
       console.log("THE STAFF ID IS", staff._id);
@@ -303,7 +312,6 @@ const MyCalendar = () => {
   
     fetchWorkingEvents();
   }, []);
-  
   
 
   
