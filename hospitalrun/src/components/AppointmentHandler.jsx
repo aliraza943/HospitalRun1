@@ -11,6 +11,17 @@ const ViewStaffComp = () => {
   const staff = location.state?.staff;
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    clientName: "",
+    serviceType: "",
+    charges: "",
+    start: null,
+    end: null,
+  });
   useEffect(() => {
     fetchAppointments();
   }, [staff]);
@@ -21,6 +32,7 @@ const ViewStaffComp = () => {
     try {
       const response = await fetch(`http://localhost:8080/api/staff/appointments/${staff._id}`);
       const data = await response.json();
+      console.log(data)
       if (response.ok) {
         setAppointments(data);
       }
@@ -29,85 +41,125 @@ const ViewStaffComp = () => {
     }
   };
 
-
-  const handleSlotSelect = async (slotInfo) => {
-    console.log(slotInfo);
+  const handleSlotSelect = (slotInfo) => {
     const { start, end } = slotInfo;
     if (!staff) return;
-  
-    // Check for overlapping events with both appointments and non-working hours
-    const isOverlapping = appointments.some((appointment) => {
-      const appointmentStart = new Date(appointment.start);
-      const appointmentEnd = new Date(appointment.end);
-      const newStart = new Date(start);
-      const newEnd = new Date(end);
 
-      return (
-        // Case 1: New event starts during an existing appointment
-        (newStart >= appointmentStart && newStart < appointmentEnd) ||
-        // Case 2: New event ends during an existing appointment
-        (newEnd > appointmentStart && newEnd <= appointmentEnd) ||
-        // Case 3: New event completely contains an existing appointment
-        (newStart <= appointmentStart && newEnd >= appointmentEnd) ||
-        // Case 4: New event is completely contained within an existing appointment
-        (newStart >= appointmentStart && newEnd <= appointmentEnd)
-      );
-    });
+    // Convert selected slot times to UTC moments
+    const selectedStartUTC = moment(start).utc();
+    const selectedEndUTC = moment(end).utc();
 
-    // Also check if the slot overlaps with non-working hours
-    const isInNonWorkingHours = nonWorkingEvents.some((nonWorking) => {
-      const nonWorkingStart = new Date(nonWorking.start);
-      const nonWorkingEnd = new Date(nonWorking.end);
-      const newStart = new Date(start);
-      const newEnd = new Date(end);
-
-      return (
-        (newStart >= nonWorkingStart && newStart < nonWorkingEnd) ||
-        (newEnd > nonWorkingStart && newEnd <= nonWorkingEnd) ||
-        (newStart <= nonWorkingStart && newEnd >= nonWorkingEnd)
-      );
-    });
-  
-    if (isOverlapping) {
-      alert("This time slot is already booked. Please select a different time.");
+    // Check if the selected slot is within working hours
+    const dayOfWeek = selectedStartUTC.format("dddd");
+    const workingSlots = staff.workingHours[dayOfWeek];
+    if (!workingSlots || workingSlots.length === 0) {
+      alert("No working hours for this day.");
       return;
     }
 
-    if (isInNonWorkingHours) {
-      alert("This time slot is outside of working hours. Please select a different time.");
+    let isWithinWorkingHours = false;
+    workingSlots.forEach((slot) => {
+      const [startStr, endStr] = slot.split(" - ");
+      const slotStart = moment(selectedStartUTC.format("YYYY-MM-DD") + " " + startStr, "YYYY-MM-DD h:mm A").utc();
+      const slotEnd = moment(selectedStartUTC.format("YYYY-MM-DD") + " " + endStr, "YYYY-MM-DD h:mm A").utc();
+
+      if (
+        selectedStartUTC.isBetween(slotStart, slotEnd, null, "[)") &&
+        selectedEndUTC.isBetween(slotStart, slotEnd, null, "(]")
+      ) {
+        isWithinWorkingHours = true;
+      }
+    });
+
+    if (!isWithinWorkingHours) {
+      alert("Selected slot is outside working hours.");
       return;
     }
-  
-    // Ask for the title of the event
-    const eventTitle = prompt("Enter the title for the event:");
-    if (!eventTitle) return; // Cancel if the user didn't enter a title
-  
-    const formattedStart = moment(start).format("YYYY-MM-DD HH:mm");
-    const formattedEnd = moment(end).format("YYYY-MM-DD HH:mm");
-  
-    const newAppointment = {
+
+    // Check for overlapping appointments
+    const isSlotOccupied = appointments.some((appointment) => {
+      const appointmentStartUTC = moment.utc(appointment.start);
+      const appointmentEndUTC = moment.utc(appointment.end);
+
+      return (
+        selectedStartUTC.isBefore(appointmentEndUTC) &&
+        selectedEndUTC.isAfter(appointmentStartUTC)
+      );
+    });
+
+    if (isSlotOccupied) {
+      alert("This time slot is already occupied. Please select a different time.");
+      return;
+    }
+ 
+
+    setNewEvent({ ...newEvent, start, end });
+    setShowModal(true);
+  };
+
+  const handleSubmitEvent = async () => {
+    if (!newEvent.title || !newEvent.clientName || !newEvent.serviceType || !newEvent.charges) {
+      alert("Please fill all fields.");
+      return;
+    }
+
+    // Convert new event times to UTC moments
+    const formattedStartUTC = moment(newEvent.start).utc();
+    const formattedEndUTC = moment(newEvent.end).utc();
+
+    // Check for overlapping appointments
+    const isSlotOccupied = appointments.some((appointment) => {
+      const appointmentStartUTC = moment.utc(appointment.start);
+      const appointmentEndUTC = moment.utc(appointment.end);
+
+      return (
+        formattedStartUTC.isBefore(appointmentEndUTC) &&
+        formattedEndUTC.isAfter(appointmentStartUTC)
+      );
+    });
+
+    if (isSlotOccupied) {
+      alert("This time slot is already occupied. Please select a different time.");
+      return;
+    }
+
+    const appointmentData = {
       staffId: staff._id,
-      start: formattedStart,
-      end: formattedEnd,
-      title: eventTitle,
+      title: newEvent.title,
+      clientName: newEvent.clientName,
+      serviceType: newEvent.serviceType,
+      charges: newEvent.charges,
+      start: formattedStartUTC.toDate(), // Convert back to Date for server
+      end: formattedEndUTC.toDate(),
     };
-  
+
     try {
       const response = await fetch("http://localhost:8080/api/staff/appointments/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newAppointment),
+        body: JSON.stringify(appointmentData),
       });
-  
+
       if (response.ok) {
-        const newAppointments = [...appointments, newAppointment];
-        setAppointments(newAppointments); // Update state immediately
-        fetchAppointments(); // Fetch from backend as well
+        fetchAppointments();
+        setNewEvent({
+          title: "",
+          clientName: "",
+          serviceType: "",
+          charges: "",
+          start: null,
+          end: null,
+        });
+         // Refresh appointments from server
+        setShowModal(false);
       }
     } catch (error) {
       console.error("Error adding appointment:", error);
     }
-  }
+  };
+  
+
+
   
   const dayNameToIndex = {
     Sunday: 0,
@@ -170,29 +222,42 @@ const ViewStaffComp = () => {
     });
     return { min: minTime.toDate(), max: maxTime.toDate() };
   }, [staff]);
-  const handleEventSelect = async (event) => {
-    if (event.title === "Non Working Hours") return; // Prevent deletion of non-working hours
+
+
+  const handleEventSelect =  (event) => {
+    if (event.title === "Non Working Hours") return;
+    setSelectedEvent(event);
+    console.log("THIS EVENMT",event)
+    
+    setShowEventDetailsModal(true);// Prevent deletion of non-working hours
   
-    const confirmDelete = window.confirm(`Do you want to delete this appointment: "${event.title}"?`);
-    if (!confirmDelete) return;
+    
+  };
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
   
     try {
-      const response = await fetch(`http://localhost:8080/api/staff/appointments/delete`, {
+      const response = await fetch("http://localhost:8080/api/staff/appointments/delete", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staffId: staff._id, start: event.start, end: event.end }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          staffId: staff._id,
+          start: selectedEvent.start,
+          end: selectedEvent.end,
+        }),
       });
   
       if (response.ok) {
-        alert("Appointment deleted successfully!");
-        fetchAppointments(); // Refresh appointments after deletion
-      } else {
-        alert("Failed to delete the appointment.");
+        setAppointments(appointments.filter((appt) => appt._id !== selectedEvent._id));
+        setShowEventDetailsModal(false);
       }
     } catch (error) {
       console.error("Error deleting appointment:", error);
     }
   };
+  
   
 
   // -----------------------------
@@ -287,9 +352,13 @@ const ViewStaffComp = () => {
   
     // Format appointments correctly
     const formattedAppointments = appointments.map((appointment) => ({
+      ...appointment, // Spread all appointment properties
       title: appointment.title || "Booked Appointment",
       start: moment(appointment.start).toDate(),
       end: moment(appointment.end).toDate(),
+      clientName: appointment.clientName,
+      serviceType: appointment.serviceType,
+      serviceCharges: appointment.serviceCharges // Note: matching the name used in modal
     }));
   
     // Combine appointments with non-working hours
@@ -351,6 +420,7 @@ const ViewStaffComp = () => {
   
 
   return (
+    <>
     <div className="w-full mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
       <h2 className="text-2xl font-semibold mb-4">Staff Appointments</h2>
 
@@ -391,6 +461,80 @@ const ViewStaffComp = () => {
         eventPropGetter={eventStyleGetter}
       />
     </div>
+
+
+
+
+    {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-xl font-bold mb-4">New Appointment</h2>
+
+            <label className="block text-sm font-medium mb-1">Title</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded mb-2"
+              value={newEvent.title}
+              onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+            />
+
+            <label className="block text-sm font-medium mb-1">Client Name</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded mb-2"
+              value={newEvent.clientName}
+              onChange={(e) => setNewEvent({ ...newEvent, clientName: e.target.value })}
+            />
+
+            <label className="block text-sm font-medium mb-1">Service Type</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded mb-2"
+              value={newEvent.serviceType}
+              onChange={(e) => setNewEvent({ ...newEvent, serviceType: e.target.value })}
+            />
+
+            <label className="block text-sm font-medium mb-1">Charges</label>
+            <input
+              type="number"
+              className="w-full p-2 border rounded mb-4"
+              value={newEvent.charges}
+              onChange={(e) => setNewEvent({ ...newEvent, charges: e.target.value })}
+            />
+
+            <div className="flex justify-end">
+              <button className="bg-gray-500 text-white px-4 py-2 rounded mr-2" onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+              <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleSubmitEvent}>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+{showEventDetailsModal && selectedEvent && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-xl font-bold mb-4">{selectedEvent.title}</h2>
+
+            <p className="text-gray-700"><strong>Client:</strong> {selectedEvent.clientName}</p>
+            <p className="text-gray-700"><strong>Service:</strong> {selectedEvent.serviceType}</p>
+            <p className="text-gray-700"><strong>Charges:</strong> ${selectedEvent.serviceCharges}</p>
+            <p className="text-gray-700">
+              <strong>Time:</strong> {moment(selectedEvent.start).format("hh:mm A")} - {moment(selectedEvent.end).format("hh:mm A")}
+            </p>
+
+            <div className="flex justify-end mt-4">
+              <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handleDeleteEvent}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
