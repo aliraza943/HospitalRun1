@@ -323,14 +323,7 @@ const MyCalendar = () => {
       <h1>Schedule for {staff?.name || "Staff Member"}</h1>
 
       {/* Display list of working events */}
-      <h2>Working Events List</h2>
-      <ul>
-        {workingEvents.map((event, index) => (
-          <li key={index}>
-            {event.title}: {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
-          </li>
-        ))}
-      </ul>
+      
 
       {/* Inline CSS to override default react-big-calendar styles */}
       <style>{`

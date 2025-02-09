@@ -20,7 +20,7 @@ const SidebarComp = () => {
                     </MenuItem>
                     <SubMenu label="Schedule">
                         <MenuItem>
-                            <Link to="/view-schedules">View My Schedule</Link>
+                            <Link to="/viewStaffCalendar">View My Schedule</Link>
                         </MenuItem>
                         <MenuItem>
                             <Link to="/set-availability">Set My Availability</Link>

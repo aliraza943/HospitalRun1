@@ -11,6 +11,8 @@ import AddServices from './pages/services/AddServices';
 import ViewServicesComp from './components/ViewServicesComp';
 import ViewServices from './pages/services/ViewServices';
 import AdminViewCalendar from './pages/calendar/AdminViewCalendar';
+import ViewStaffCalendar from './pages/staff/ViewStaffCalendar'
+import ViewStaffAppoints from './pages/schedule/ViewAppointments'
 
 const App = () => {
   return (
@@ -18,8 +20,11 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/view-schedules" element={<ViewSchedule />} />
+        <Route path="/viewStaffAppointments" element={<ViewStaffAppoints />} />
         <Route path="/addStaff" element={<AddStaff />} />
         <Route path="/viewStaff" element={<ViewStaff />} />
+        <Route path="/viewStaffCalendar" element={<ViewStaffCalendar />} />
+
         <Route path="/addServices" element={<AddServices />} />
         <Route path="/viewServices" element={<ViewServices />} />
         <Route path="/adminCalendar" element={<AdminViewCalendar />} />
