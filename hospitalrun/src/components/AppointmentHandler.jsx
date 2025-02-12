@@ -413,129 +413,200 @@ const ViewStaffComp = () => {
     background-color: #3174ad !important;
   }
 `;
+const handleUpdateEvent = async () => {
+  if (!selectedEvent) return;
+
+  try {
+      const response = await fetch(`http://localhost:8080/api/staff/appointments/${selectedEvent._id}`, {
+          method: "PUT",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+              title: selectedEvent.title,
+              clientName: selectedEvent.clientName,
+              serviceType: selectedEvent.serviceType,
+              serviceCharges: selectedEvent.serviceCharges,
+          }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+          alert("Appointment updated successfully!");
+          setShowEventDetailsModal(false); // Close the modal after update
+          fetchAppointments()
+      } else {
+          alert(`Error: ${data.message}`);
+      }
+  } catch (error) {
+      console.error("Update Error:", error);
+      alert("Failed to update the appointment.");
+  }
+};
 
 
 
 
   
+const isAllDaysNull = Object.values(staff.workingHours).every((day) => day === null);
+return (
+<>
+{isAllDaysNull ? (
+  <div className="w-full mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+    <h2 className="text-2xl font-semibold text-center text-gray-500">
+      The working hours of this employee are not set.
+    </h2>
+  </div>
+) : (
+  <div className="w-full mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+    <h2 className="text-2xl font-semibold mb-4">Staff Appointments</h2>
 
-  return (
-    <>
-    <div className="w-full mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-      <h2 className="text-2xl font-semibold mb-4">Staff Appointments</h2>
+    {/* Display the overall working hours range */}
+    <p className="mb-4">
+      <strong>Working Hours:</strong> {workingRangeDisplay}
+    </p>
 
-      {/* Display the overall working hours range */}
-      <p className="mb-4">
-        <strong>Working Hours:</strong> {workingRangeDisplay}
-      </p>
+    {/* CSS to hide entire day columns with no working hours */}
+    <style>
+      {`
+        ${nonWorkingDays.map((nth) => `.rbc-day-bg:nth-child(${nth}) { display: none; }`).join("\n")}
+        ${customStyles}
+      `}
+    </style>
+    <div style={{ pointerEvents: showModal || showEventDetailsModal? "none" : "auto" }}>
 
-      {/* CSS to hide entire day columns with no working hours */}
-      <style>
-        {`
-          ${nonWorkingDays.map((nth) => `.rbc-day-bg:nth-child(${nth}) { display: none; }`).join("\n")}
-          ${customStyles}
-        `}
-      </style>
+    <Calendar
+      localizer={localizer}
+      events={events}
+      date={currentDate}
+      onNavigate={handleNavigate}
+      defaultView="week"
+      views={["week", "day"]}
+      startAccessor="start"
+      endAccessor="end"
+      style={{ height: 600, width: "100%" }}
+      step={60}
+      timeslots={1}
+      dayPropGetter={customDayPropGetter}
+      onSelectSlot={handleSlotSelect}
+      onSelectEvent={handleEventSelect}
+      selectable={true}
+      // Use the computed working range to limit the visible hours.
+      min={workingRange.min}
+      max={workingRange.max}
+      eventPropGetter={eventStyleGetter}
+    />
+  </div>
+  </div>
+)}
 
-      
+{showModal && (
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 className="text-xl font-bold mb-4">New Appointment</h2>
 
-      <Calendar
-        localizer={localizer}
-        events={events}
-        date={currentDate}
-        onNavigate={handleNavigate}
-        defaultView="week"
-        views={["week", "day"]}
-        startAccessor="start"
-        endAccessor="end"
-        style={{ height: 600,width:"100%" }}
-        step={60}
-        timeslots={1}
-        dayPropGetter={customDayPropGetter}
-        onSelectSlot={handleSlotSelect} 
-        onSelectEvent={handleEventSelect} 
-        selectable={true}
-        // Use the computed working range to limit the visible hours.
-        min={workingRange.min}
-        max={workingRange.max}
-        eventPropGetter={eventStyleGetter}
+      <label className="block text-sm font-medium mb-1">Title</label>
+      <input
+        type="text"
+        className="w-full p-2 border rounded mb-2"
+        value={newEvent.title}
+        onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
       />
+
+      <label className="block text-sm font-medium mb-1">Client Name</label>
+      <input
+        type="text"
+        className="w-full p-2 border rounded mb-2"
+        value={newEvent.clientName}
+        onChange={(e) => setNewEvent({ ...newEvent, clientName: e.target.value })}
+      />
+
+      <label className="block text-sm font-medium mb-1">Service Type</label>
+      <input
+        type="text"
+        className="w-full p-2 border rounded mb-2"
+        value={newEvent.serviceType}
+        onChange={(e) => setNewEvent({ ...newEvent, serviceType: e.target.value })}
+      />
+
+      <label className="block text-sm font-medium mb-1">Charges</label>
+      <input
+        type="number"
+        className="w-full p-2 border rounded mb-4"
+        value={newEvent.charges}
+        onChange={(e) => setNewEvent({ ...newEvent, charges: e.target.value })}
+      />
+
+      <div className="flex justify-end">
+        <button className="bg-gray-500 text-white px-4 py-2 rounded mr-2" onClick={() => setShowModal(false)}>
+          Cancel
+        </button>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleSubmitEvent}>
+          Save
+        </button>
+      </div>
     </div>
-
-
-
-
-    {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-bold mb-4">New Appointment</h2>
-
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded mb-2"
-              value={newEvent.title}
-              onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-            />
-
-            <label className="block text-sm font-medium mb-1">Client Name</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded mb-2"
-              value={newEvent.clientName}
-              onChange={(e) => setNewEvent({ ...newEvent, clientName: e.target.value })}
-            />
-
-            <label className="block text-sm font-medium mb-1">Service Type</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded mb-2"
-              value={newEvent.serviceType}
-              onChange={(e) => setNewEvent({ ...newEvent, serviceType: e.target.value })}
-            />
-
-            <label className="block text-sm font-medium mb-1">Charges</label>
-            <input
-              type="number"
-              className="w-full p-2 border rounded mb-4"
-              value={newEvent.charges}
-              onChange={(e) => setNewEvent({ ...newEvent, charges: e.target.value })}
-            />
-
-            <div className="flex justify-end">
-              <button className="bg-gray-500 text-white px-4 py-2 rounded mr-2" onClick={() => setShowModal(false)}>
-                Cancel
-              </button>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleSubmitEvent}>
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  </div>
+)}
 
 {showEventDetailsModal && selectedEvent && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-bold mb-4">{selectedEvent.title}</h2>
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 className="text-xl font-bold mb-4">Edit Event Details</h2>
 
-            <p className="text-gray-700"><strong>Client:</strong> {selectedEvent.clientName}</p>
-            <p className="text-gray-700"><strong>Service:</strong> {selectedEvent.serviceType}</p>
-            <p className="text-gray-700"><strong>Charges:</strong> ${selectedEvent.serviceCharges}</p>
-            <p className="text-gray-700">
-              <strong>Time:</strong> {moment(selectedEvent.start).format("hh:mm A")} - {moment(selectedEvent.end).format("hh:mm A")}
-            </p>
+      <label className="block text-gray-700 font-semibold">Title:</label>
+      <input
+        type="text"
+        className="w-full p-2 border rounded mb-2"
+        value={selectedEvent.title}
+        onChange={(e) => setSelectedEvent({ ...selectedEvent, title: e.target.value })}
+      />
 
-            <div className="flex justify-end mt-4">
-              <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handleDeleteEvent}>
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
+      <label className="block text-gray-700 font-semibold">Client:</label>
+      <input
+        type="text"
+        className="w-full p-2 border rounded mb-2"
+        value={selectedEvent.clientName}
+        onChange={(e) => setSelectedEvent({ ...selectedEvent, clientName: e.target.value })}
+      />
+
+      <label className="block text-gray-700 font-semibold">Service:</label>
+      <input
+        type="text"
+        className="w-full p-2 border rounded mb-2"
+        value={selectedEvent.serviceType}
+        onChange={(e) => setSelectedEvent({ ...selectedEvent, serviceType: e.target.value })}
+      />
+
+      <label className="block text-gray-700 font-semibold">Charges:</label>
+      <input
+        type="number"
+        className="w-full p-2 border rounded mb-2"
+        value={selectedEvent.serviceCharges}
+        onChange={(e) => setSelectedEvent({ ...selectedEvent, serviceCharges: e.target.value })}
+      />
+
+      {/* Non-editable Start Time */}
+    
+
+      <div className="flex justify-between mt-4">
+        <button className="bg-gray-500 text-white px-4 py-2 rounded" onClick={() => setShowEventDetailsModal(false)}>
+          Cancel
+        </button>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleUpdateEvent}>
+          Save
+        </button>
+        <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handleDeleteEvent}>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+</>
+);
 };
 
 export default ViewStaffComp;
