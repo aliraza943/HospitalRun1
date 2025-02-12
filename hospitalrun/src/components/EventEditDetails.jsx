@@ -24,26 +24,29 @@ const EventDetailsModal = ({
   const getWorkingHoursForDay = (day) => {
     const hours = workingHours[day];
     if (!hours || hours.length === 0) return null;
-    const [start, end] = hours[0].split(" - ");
-    return { min: convertTo24Hour(start), max: convertTo24Hour(end) };
+  
+    return hours.map(range => {
+      const [start, end] = range.split(" - ");
+      return { min: convertTo24Hour(start), max: convertTo24Hour(end) };
+    });
   };
-
   // Initialize time range when modal opens or selected event changes
   useEffect(() => {
     if (showEventDetailsModal && selectedEvent && selectedEvent.start) {
       const eventDate = new Date(selectedEvent.start);
       const dayOfWeek = eventDate.toLocaleString("en-US", { weekday: "long" });
-      const workingTime = getWorkingHoursForDay(dayOfWeek);
-      
-      if (!workingTime) {
+      const workingTimeSlots = getWorkingHoursForDay(dayOfWeek);
+  
+      if (!workingTimeSlots) {
         setIsWorkingDay(false);
-        setTimeRange({ min: "09:00", max: "18:00" }); // Default values for non-working days
+        setTimeRange([]); // Empty array since it's a non-working day
       } else {
         setIsWorkingDay(true);
-        setTimeRange(workingTime);
+        setTimeRange(workingTimeSlots);
       }
     }
   }, [showEventDetailsModal, selectedEvent, workingHours]);
+  
 
   if (!showEventDetailsModal || !selectedEvent) return null;
 
@@ -84,8 +87,11 @@ const EventDetailsModal = ({
       ? new Date(selectedEvent.start).toISOString().split("T")[0]
       : "";
   
-    if (newTime < timeRange.min || newTime > timeRange.max) {
-      alert(`Time must be between ${timeRange.min} and ${timeRange.max}.`);
+    // Check if the selected time falls in any of the valid working slots
+    const isValidTime = timeRange.some(range => newTime >= range.min && newTime <= range.max);
+  
+    if (!isValidTime) {
+      alert(`Time must be within the available working hours:\n${timeRange.map(r => `${r.min} - ${r.max}`).join("\n")}`);
       return;
     }
   
