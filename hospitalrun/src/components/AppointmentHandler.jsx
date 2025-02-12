@@ -3,6 +3,8 @@ import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useLocation } from "react-router-dom";
 import { useState, useMemo,useEffect } from "react";
+import EventEditDetails from './EventEditDetails'
+
 
 const localizer = momentLocalizer(moment);
 
@@ -14,6 +16,7 @@ const ViewStaffComp = () => {
   const [showModal, setShowModal] = useState(false);
   const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [timeRange, setTimeRange] = useState({ min: "09:00", max: "18:00" });
   const [newEvent, setNewEvent] = useState({
     title: "",
     clientName: "",
@@ -414,37 +417,48 @@ const ViewStaffComp = () => {
   }
 `;
 const handleUpdateEvent = async () => {
+  console.log("THIS EVENT WAS TRIGGERED");
   if (!selectedEvent) return;
+  
+  console.log("The data being set", selectedEvent);
 
   try {
-      const response = await fetch(`http://localhost:8080/api/staff/appointments/${selectedEvent._id}`, {
-          method: "PUT",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-              title: selectedEvent.title,
-              clientName: selectedEvent.clientName,
-              serviceType: selectedEvent.serviceType,
-              serviceCharges: selectedEvent.serviceCharges,
-          }),
-      });
+    // Convert local date to UTC ISO format
+    const startUTC = new Date(selectedEvent.start).toISOString();
+    const endUTC = new Date(selectedEvent.end).toISOString();
+   
 
-      const data = await response.json();
+    const response = await fetch(`http://localhost:8080/api/staff/appointments/${selectedEvent._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: selectedEvent.title,
+        clientName: selectedEvent.clientName,
+        serviceType: selectedEvent.serviceType,
+        serviceCharges: selectedEvent.serviceCharges,
+        date: new Date(selectedEvent.start).toISOString().split("T")[0], // Extracts date part only
+        start: startUTC, // Now properly formatted as UTC ISO 8601
+        end: endUTC,
+        staffId:selectedEvent.staffId// Now properly formatted as UTC ISO 8601
+      }),
+    });
 
-      if (response.ok) {
-          alert("Appointment updated successfully!");
-          setShowEventDetailsModal(false); // Close the modal after update
-          fetchAppointments()
-      } else {
-          alert(`Error: ${data.message}`);
-      }
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Appointment updated successfully!");
+      fetchAppointments();
+      setShowEventDetailsModal(false); // Close modal after update
+    } else {
+      alert(`Error: ${data.message}`);
+    }
   } catch (error) {
-      console.error("Update Error:", error);
-      alert("Failed to update the appointment.");
+    console.error("Update Error:", error);
+    alert("Failed to update the appointment.");
   }
 };
-
 
 
 
@@ -551,59 +565,17 @@ return (
 )}
 
 {showEventDetailsModal && selectedEvent && (
-  <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-      <h2 className="text-xl font-bold mb-4">Edit Event Details</h2>
-
-      <label className="block text-gray-700 font-semibold">Title:</label>
-      <input
-        type="text"
-        className="w-full p-2 border rounded mb-2"
-        value={selectedEvent.title}
-        onChange={(e) => setSelectedEvent({ ...selectedEvent, title: e.target.value })}
-      />
-
-      <label className="block text-gray-700 font-semibold">Client:</label>
-      <input
-        type="text"
-        className="w-full p-2 border rounded mb-2"
-        value={selectedEvent.clientName}
-        onChange={(e) => setSelectedEvent({ ...selectedEvent, clientName: e.target.value })}
-      />
-
-      <label className="block text-gray-700 font-semibold">Service:</label>
-      <input
-        type="text"
-        className="w-full p-2 border rounded mb-2"
-        value={selectedEvent.serviceType}
-        onChange={(e) => setSelectedEvent({ ...selectedEvent, serviceType: e.target.value })}
-      />
-
-      <label className="block text-gray-700 font-semibold">Charges:</label>
-      <input
-        type="number"
-        className="w-full p-2 border rounded mb-2"
-        value={selectedEvent.serviceCharges}
-        onChange={(e) => setSelectedEvent({ ...selectedEvent, serviceCharges: e.target.value })}
-      />
-
-      {/* Non-editable Start Time */}
-    
-
-      <div className="flex justify-between mt-4">
-        <button className="bg-gray-500 text-white px-4 py-2 rounded" onClick={() => setShowEventDetailsModal(false)}>
-          Cancel
-        </button>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleUpdateEvent}>
-          Save
-        </button>
-        <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handleDeleteEvent}>
-          Delete
-        </button>
-      </div>
-    </div>
-  </div>
+  <EventEditDetails
+  showEventDetailsModal={showEventDetailsModal}
+  selectedEvent={selectedEvent}
+  setSelectedEvent={setSelectedEvent}
+  setShowEventDetailsModal={setShowEventDetailsModal}
+  handleUpdateEvent={handleUpdateEvent}
+  handleDeleteEvent={handleDeleteEvent}
+  workingHours={staff.workingHours}
+/>
 )}
+
 
 </>
 );
