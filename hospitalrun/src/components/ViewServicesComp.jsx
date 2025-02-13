@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const ViewServicesComp = () => {
+    const navigate = useNavigate(); // ✅ For navigation
     const [servicesList, setServicesList] = useState([]);
     const [editingService, setEditingService] = useState(null);
     const [updatedService, setUpdatedService] = useState({
@@ -63,8 +65,16 @@ const ViewServicesComp = () => {
 
     return (
         <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-            <h2 className="text-2xl font-semibold mb-4">Services List</h2>
 
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold mb-4">Services List</h2>
+                <button
+                    onClick={() => navigate("/addServices")}
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                    Add Services
+                </button>
+            </div>
             <table className="w-full border-collapse text-center border border-gray-300">
                 <thead>
                     <tr className="bg-gray-200">

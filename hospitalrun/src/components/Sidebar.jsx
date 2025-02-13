@@ -23,7 +23,8 @@ const SidebarComp = () => {
                             <Link to="/viewStaffCalendar">View My Schedule</Link>
                         </MenuItem>
                         <MenuItem>
-                            <Link to="/set-availability">Set My Availability</Link>
+                            <Link to="/viewStaff">Set My Availability</Link>
+
                         </MenuItem>
                     </SubMenu>
                     <SubMenu label="Clientele">
@@ -36,10 +37,11 @@ const SidebarComp = () => {
                     </SubMenu>
                     <SubMenu label="Admin">
                         <MenuItem>  <Link to="/viewServices">View Services</Link></MenuItem>
-                        <MenuItem>  <Link to="/addServices">Add Services</Link></MenuItem>
+                        {/* <MenuItem>  <Link to="/addServices">Add Services</Link></MenuItem> */}
                         <MenuItem>  <Link to="/adminCalendar"> View Calendar </Link> </MenuItem>
-                        <MenuItem>  <Link to="/viewStaff"> View Staff</Link>  </MenuItem>
-                        <MenuItem>  <Link to="/addStaff">Add Staff</Link> </MenuItem>
+                        <MenuItem>  <Link to="/viewStaff"> View Staff </Link> </MenuItem>
+
+                        {/* <MenuItem>  <Link to="/addStaff">Add Staff</Link> </MenuItem> */}
 
                     </SubMenu>
                 </Menu>

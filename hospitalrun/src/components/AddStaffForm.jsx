@@ -1,13 +1,14 @@
 import { useState } from "react";
 import axios from "axios";
-
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 const AddStaffForm = () => {
+    const navigate = useNavigate(); // Initialize navigate
     const [staff, setStaff] = useState({
         name: "",
         email: "",
         phone: "",
         role: "barber",
-       
+
         permissions: [],
     });
 
@@ -48,6 +49,7 @@ const AddStaffForm = () => {
                 workingHours: "",
                 permissions: [],
             });
+            setTimeout(() => navigate("/viewStaff"), 1000);
         } catch (error) {
             setMessage(error.response?.data?.message || "Failed to add staff!");
         } finally {
@@ -168,6 +170,7 @@ const AddStaffForm = () => {
                     type="submit"
                     className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
                     disabled={loading}
+
                 >
                     {loading ? "Adding..." : "Add Staff"}
                 </button>

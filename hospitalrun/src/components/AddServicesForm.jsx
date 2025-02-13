@@ -1,7 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const AddServiceForm = () => {
+    const navigate = useNavigate(); // Initialize navigate
     const [service, setService] = useState({
         name: "",
         duration: "",
@@ -28,6 +30,7 @@ const AddServiceForm = () => {
             const response = await axios.post("http://localhost:8080/api/services/add", service);
             setMessage(response.data.message);
             setService({ name: "", duration: "", price: "", category: "Haircut" });
+            setTimeout(() => navigate("/viewServices"), 1000);
         } catch (error) {
             setMessage(error.response?.data?.message || "Failed to add service!");
         } finally {

@@ -71,7 +71,15 @@ const ViewStaffComp = () => {
 
     return (
         <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-            <h2 className="text-2xl font-semibold mb-4">Staff List</h2>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-semibold">Staff List</h2>
+                <button
+                    onClick={() => navigate("/addStaff")}
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                    Add Staff
+                </button>
+            </div>
 
             <table className="w-full border-collapse text-center border border-gray-300">
                 <thead>
