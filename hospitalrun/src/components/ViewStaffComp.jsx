@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 const ViewStaffComp = () => {
     const [staffList, setStaffList] = useState([]);
+    const [filteredStaff, setFilteredStaff] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const [editingStaff, setEditingStaff] = useState(null);
     const [updatedStaff, setUpdatedStaff] = useState({
         name: "",
@@ -15,14 +17,28 @@ const ViewStaffComp = () => {
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const navigate = useNavigate(); // ✅ For navigation
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetch("http://localhost:8080/api/staff")
             .then((res) => res.json())
-            .then((data) => setStaffList(data))
+            .then((data) => {
+                setStaffList(data);
+                setFilteredStaff(data);
+            })
             .catch((err) => console.error("Error fetching staff:", err));
     }, []);
+
+    useEffect(() => {
+        setFilteredStaff(
+            staffList.filter(
+                (staff) =>
+                    staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    staff.role.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+        );
+    }, [searchQuery, staffList]);
 
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this staff member?")) return;
@@ -54,8 +70,7 @@ const ViewStaffComp = () => {
 
             if (!res.ok) throw new Error("Failed to update");
 
-            const updatedList = staffList.map((s) => (s._id === editingStaff ? updatedStaff : s));
-            setStaffList(updatedList);
+            setStaffList(staffList.map((s) => (s._id === editingStaff ? updatedStaff : s)));
             setEditingStaff(null);
             setIsModalOpen(false);
             alert("Staff updated successfully!");
@@ -66,7 +81,7 @@ const ViewStaffComp = () => {
     };
 
     const handleSchedule = (staff) => {
-        navigate("/view-schedules", { state: { staff } }); // ✅ Pass staff data to Schedule page
+        navigate("/view-schedules", { state: { staff } });
     };
 
     return (
@@ -81,6 +96,14 @@ const ViewStaffComp = () => {
                 </button>
             </div>
 
+            <input
+                type="text"
+                placeholder="Search by name, email, or role..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full p-2 mb-4 border rounded"
+            />
+
             <table className="w-full border-collapse text-center border border-gray-300">
                 <thead>
                     <tr className="bg-gray-200">
@@ -92,29 +115,20 @@ const ViewStaffComp = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {staffList.map((staff) => (
+                    {filteredStaff.map((staff) => (
                         <tr key={staff._id} className="border">
                             <td className="border p-2">{staff.name}</td>
                             <td className="border p-2">{staff.email}</td>
                             <td className="border p-2">{staff.phone}</td>
                             <td className="border p-2">{staff.role}</td>
                             <td className="border p-2 space-x-2">
-                                <button
-                                    onClick={() => handleEdit(staff)}
-                                    className="text-blue-500 text-lg"
-                                >
+                                <button onClick={() => handleEdit(staff)} className="text-blue-500 text-lg">
                                     <FaEdit />
                                 </button>
-                                <button
-                                    onClick={() => handleDelete(staff._id)}
-                                    className="text-red-500 text-lg"
-                                >
+                                <button onClick={() => handleDelete(staff._id)} className="text-red-500 text-lg">
                                     <FaTrash />
                                 </button>
-                                <button
-                                    onClick={() => handleSchedule(staff)}
-                                    className="text-green-500 text-lg"
-                                >
+                                <button onClick={() => handleSchedule(staff)} className="text-green-500 text-lg">
                                     <FaCalendarAlt />
                                 </button>
                             </td>

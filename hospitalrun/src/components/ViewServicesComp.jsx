@@ -3,8 +3,10 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const ViewServicesComp = () => {
-    const navigate = useNavigate(); // ✅ For navigation
+    const navigate = useNavigate();
     const [servicesList, setServicesList] = useState([]);
+    const [filteredServices, setFilteredServices] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const [editingService, setEditingService] = useState(null);
     const [updatedService, setUpdatedService] = useState({
         name: "",
@@ -18,16 +20,33 @@ const ViewServicesComp = () => {
     useEffect(() => {
         fetch("http://localhost:8080/api/services")
             .then((res) => res.json())
-            .then((data) => setServicesList(data))
+            .then((data) => {
+                setServicesList(data);
+                setFilteredServices(data);
+            })
             .catch((err) => console.error("Error fetching services:", err));
     }, []);
+
+    const handleSearch = (e) => {
+        const query = e.target.value.toLowerCase();
+        setSearchQuery(query);
+        const filtered = servicesList.filter(
+            (service) =>
+                service.name.toLowerCase().includes(query) ||
+                service.price.toString().includes(query) ||
+                service.duration.toString().includes(query)
+        );
+        setFilteredServices(filtered);
+    };
 
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this service?")) return;
 
         try {
             await fetch(`http://localhost:8080/api/services/${id}`, { method: "DELETE" });
-            setServicesList(servicesList.filter((service) => service._id !== id));
+            const updatedList = servicesList.filter((service) => service._id !== id);
+            setServicesList(updatedList);
+            setFilteredServices(updatedList);
             alert("Service deleted successfully!");
         } catch (error) {
             console.error("Error deleting service:", error);
@@ -54,6 +73,7 @@ const ViewServicesComp = () => {
 
             const updatedList = servicesList.map((s) => (s._id === editingService ? updatedService : s));
             setServicesList(updatedList);
+            setFilteredServices(updatedList);
             setEditingService(null);
             setIsModalOpen(false);
             alert("Service updated successfully!");
@@ -65,9 +85,8 @@ const ViewServicesComp = () => {
 
     return (
         <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-semibold mb-4">Services List</h2>
+                <h2 className="text-2xl font-semibold">Services List</h2>
                 <button
                     onClick={() => navigate("/addServices")}
                     className="bg-blue-500 text-white px-4 py-2 rounded"
@@ -75,6 +94,16 @@ const ViewServicesComp = () => {
                     Add Services
                 </button>
             </div>
+
+            {/* Search Bar */}
+            <input
+                type="text"
+                placeholder="Search services by name, price, duration"
+                value={searchQuery}
+                onChange={handleSearch}
+                className="w-full mb-4 p-2 border rounded"
+            />
+
             <table className="w-full border-collapse text-center border border-gray-300">
                 <thead>
                     <tr className="bg-gray-200">
@@ -86,7 +115,7 @@ const ViewServicesComp = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {servicesList.map((service) => (
+                    {filteredServices.map((service) => (
                         <tr key={service._id} className="border">
                             <td className="border p-2">{service.name}</td>
                             <td className="border p-2">${service.price}</td>
