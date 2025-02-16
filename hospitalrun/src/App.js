@@ -13,12 +13,14 @@ import ViewServices from './pages/services/ViewServices';
 import AdminViewCalendar from './pages/calendar/AdminViewCalendar';
 import ViewStaffCalendar from './pages/staff/ViewStaffCalendar'
 import ViewStaffAppoints from './pages/schedule/ViewAppointments'
+import Login from './components/Login'
 
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/view-schedules" element={<ViewSchedule />} />
         <Route path="/viewStaffAppointments" element={<ViewStaffAppoints />} />
         <Route path="/addStaff" element={<AddStaff />} />
