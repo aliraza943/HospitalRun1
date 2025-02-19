@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+
 const AddStaffForm = () => {
     const navigate = useNavigate(); // Initialize navigate
     const [staff, setStaff] = useState({
@@ -8,7 +9,7 @@ const AddStaffForm = () => {
         email: "",
         phone: "",
         role: "barber",
-
+        workingHours: "",
         permissions: [],
     });
 
@@ -37,9 +38,18 @@ const AddStaffForm = () => {
         e.preventDefault();
         setLoading(true);
         setMessage("");
-
+    
         try {
-            const response = await axios.post("http://localhost:8080/api/staff/add", staff);
+            const response = await axios.post(
+                "http://localhost:8080/api/staff/add", 
+                staff, // Pass staff as request body
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
+                    },
+                }
+            );
             setMessage(response.data.message);
             setStaff({
                 name: "",
@@ -56,7 +66,7 @@ const AddStaffForm = () => {
             setLoading(false);
         }
     };
-
+    
     return (
         <div className="max-w-lg mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Add Staff</h2>
@@ -140,7 +150,47 @@ const AddStaffForm = () => {
                 {staff.role === "frontdesk" && (
                     <div>
                         <label className="block text-gray-700">Permissions</label>
-                        <div className="flex gap-4">
+                        <div className="flex flex-col gap-2">
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    value="manage_services"
+                                    checked={staff.permissions.includes("manage_services")}
+                                    onChange={handlePermissionsChange}
+                                    className="mr-2"
+                                />
+                                Manage Services
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    value="manage_staff"
+                                    checked={staff.permissions.includes("manage_staff")}
+                                    onChange={handlePermissionsChange}
+                                    className="mr-2"
+                                />
+                                Manage Staff
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    value="manage_businessHours"
+                                    checked={staff.permissions.includes("manage_businessHours")}
+                                    onChange={handlePermissionsChange}
+                                    className="mr-2"
+                                />
+                                Manage Business Hours
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    value="modify_working_hours"
+                                    checked={staff.permissions.includes("modify_working_hours")}
+                                    onChange={handlePermissionsChange}
+                                    className="mr-2"
+                                />
+                                Modify Working Hours
+                            </label>
                             <label className="flex items-center">
                                 <input
                                     type="checkbox"
@@ -151,16 +201,6 @@ const AddStaffForm = () => {
                                 />
                                 Manage Appointments
                             </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    value="manage_payments"
-                                    checked={staff.permissions.includes("manage_payments")}
-                                    onChange={handlePermissionsChange}
-                                    className="mr-2"
-                                />
-                                Manage Payments
-                            </label>
                         </div>
                     </div>
                 )}
@@ -170,7 +210,6 @@ const AddStaffForm = () => {
                     type="submit"
                     className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
                     disabled={loading}
-
                 >
                     {loading ? "Adding..." : "Add Staff"}
                 </button>

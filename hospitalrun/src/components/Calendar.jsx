@@ -8,6 +8,7 @@ import startOfWeek from "date-fns/startOfWeek";
 import getDay from "date-fns/getDay";
 import { enUS } from "date-fns/locale";
 import { addHours, parse as parseDate } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 const locales = { "en-US": enUS };
 const localizer = dateFnsLocalizer({
@@ -46,6 +47,8 @@ const MyCalendar = () => {
   const [missingEvents, setMissingEvents] = useState([]);
   const [workingEvents, setWorkingEvents] = useState([]);
   const [fetchedWorkingEvents, setFetchedWorkingEvents] = useState([]);
+  const navigate = useNavigate();
+
 
 
   // Function to generate "missing" (non-working) event slots based on API schedule
@@ -108,7 +111,14 @@ const MyCalendar = () => {
   useEffect(() => {
     const fetchSchedule = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/workhours/get-schedule");
+        const res = await fetch("http://localhost:8080/api/workhours/get-schedule", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
+          },
+        });
+  
         const data = await res.json();
         if (res.ok && data.schedule) {
           setSchedule(data.schedule);
@@ -117,16 +127,23 @@ const MyCalendar = () => {
         console.error("Fetch error:", err);
       }
     };
-
+  
     fetchSchedule();
   }, []);
+  
 
   useEffect(() => {
     const fetchStaffData = async () => {
       if (!staff?._id) return;
 
       try {
-        const res = await fetch(`http://localhost:8080/api/staff/${staff._id}`);
+        const res = await fetch(`http://localhost:8080/api/staff/${staff._id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
+          },
+        })
         const data = await res.json();
 
         if (res.ok) {
@@ -240,7 +257,7 @@ const MyCalendar = () => {
   
   
   // Track changes in workingEvents using useEffect
-  const updateScheduleAPI = async (combinedEvents) => {
+  const updateScheduleAPI = async (combinedEvents, navigate) => {
     if (!staff?._id) {
       console.error("Staff ID is missing.");
       return;
@@ -255,11 +272,18 @@ const MyCalendar = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token
         },
         body: JSON.stringify({ schedule: updatedSchedule }),
       });
   
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          navigate("/unauthorized", {
+            state: { message: "You are not authorized to modify the employee schedule." },
+          });
+          return;
+        }
         throw new Error(`API error: ${response.statusText}`);
       }
   
@@ -270,12 +294,13 @@ const MyCalendar = () => {
     }
   };
   
+  
   // useEffect now depends on both workingEvents and fetchedWorkingEvents.
   // It combines them and sends the updated schedule to the backend.
   useEffect(() => {
     const combinedEvents = [...workingEvents, ...fetchedWorkingEvents];
     if (combinedEvents.length > 0) {
-      updateScheduleAPI(combinedEvents);
+      updateScheduleAPI(combinedEvents,navigate);
     }
   }, [workingEvents, fetchedWorkingEvents]);
   useEffect(() => {

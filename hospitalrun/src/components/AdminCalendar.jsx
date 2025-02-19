@@ -24,21 +24,29 @@ const AdminCalendar = () => {
   // ----------------------------------------------------------------
   useEffect(() => {
     const fetchSchedule = async () => {
-      try {
-        const res = await fetch("http://localhost:8080/api/workhours/get-schedule");
-        const data = await res.json();
-        if (res.ok && data.schedule) {
-          setEvents(formatScheduleToEvents(data.schedule));
-        } else {
-          console.error("Error fetching schedule:", data.error || "No schedule found");
+        try {
+            const res = await fetch("http://localhost:8080/api/workhours/get-schedule", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+
+            const data = await res.json();
+            if (res.ok && data.schedule) {
+                setEvents(formatScheduleToEvents(data.schedule));
+            } else {
+                console.error("Error fetching schedule:", data.error || "No schedule found");
+            }
+        } catch (err) {
+            console.error("Fetch error:", err);
         }
-      } catch (err) {
-        console.error("Fetch error:", err);
-      }
     };
 
     fetchSchedule();
-  }, []);
+}, []);
+
 
   // ----------------------------------------------------------------
   // 2. Convert stored schedule object into calendar events
@@ -110,21 +118,35 @@ const AdminCalendar = () => {
 
   const updateSchedule = async (formattedSchedule) => {
     try {
-      const res = await fetch("http://localhost:8080/api/workhours/update-schedule", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ schedule: formattedSchedule }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        console.error("Error updating schedule:", data.error);
-      }
+        const res = await fetch("http://localhost:8080/api/workhours/update-schedule", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token
+            },
+            body: JSON.stringify({ schedule: formattedSchedule }),
+        });
+
+        const data = await res.json();
+        
+        if (res.status === 403) {
+            alert("Forbidden: You do not have permission to update the schedule.");
+           
+            return false; // Prevent adding the event
+        }
+
+        if (!res.ok) {
+            console.error("Error updating schedule:", data.error);
+            return false;
+        }
+
+        return true; // Schedule update successful
     } catch (err) {
-      console.error("PUT error:", err);
+        console.error("PUT error:", err);
+        return false;
     }
-  };
+};
+
 
   // ----------------------------------------------------------------
   // 5. Check if selected time slot overlaps with any existing event
@@ -148,10 +170,17 @@ const AdminCalendar = () => {
 
   const handleDeleteEvent = (event) => {
     if (window.confirm("Delete this event?")) {
-      setEvents(prevEvents => prevEvents.filter(e => e.id !== event.id));
+      setEvents(prevEvents => {
+        const updatedEvents = prevEvents.filter(e => e.id !== event.id);
+        
+        // 🔴 Ensure schedule is sent even if events become empty
+        updateSchedule(getFormattedEvents(updatedEvents));
+  
+        return updatedEvents;
+      });
     }
   };
-
+  
   // ----------------------------------------------------------------
   // 7. Render the Calendar
   // ----------------------------------------------------------------

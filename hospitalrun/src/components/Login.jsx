@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import axios from "axios";
 
 const Header = () => (
@@ -19,10 +20,12 @@ const Login = () => {
     const [errorMessage, setErrorMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
+    const navigate = useNavigate(); 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setErrorMessage(""); // Clear previous errors
+        setErrorMessage("");
     
         try {
             const response = await axios.post("http://localhost:8080/api/auth/login", {
@@ -30,21 +33,31 @@ const Login = () => {
                 password,
             });
     
-            // If login is successful
-            localStorage.setItem("token", response.data.token); // Store token
-            alert(`Login Successful! Token: ${response.data.token}`);
+            const { token, user } = response.data;
+    
+            // Store token and user details in localStorage
+            localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify(user));
+            console.log(user) // Store user info
+    
+            alert("Login Successful!");
+    
             setLoading(false);
+    
+           
+                navigate("/");
+            
         } catch (error) {
             setLoading(false);
             if (error.response) {
-                setErrorMessage(error.response.data.message); // Show server-side error
+                setErrorMessage(error.response.data.message);
             } else {
                 setErrorMessage("An error occurred. Please try again.");
             }
         }
     };
     
-
+    
     return (
         <div className="flex flex-col min-h-screen bg-gray-100">
             <Header />

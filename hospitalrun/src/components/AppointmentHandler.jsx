@@ -139,7 +139,7 @@ const ViewStaffComp = () => {
     try {
       const response = await fetch("http://localhost:8080/api/staff/appointments/add", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" , Authorization: `Bearer ${localStorage.getItem("token")}`,},
         body: JSON.stringify(appointmentData),
       });
 
@@ -243,7 +243,7 @@ const ViewStaffComp = () => {
       const response = await fetch("http://localhost:8080/api/staff/appointments/delete", {
         method: "DELETE",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json",Authorization: `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify({
           staffId: staff._id,
@@ -431,7 +431,7 @@ const handleUpdateEvent = async () => {
     const response = await fetch(`http://localhost:8080/api/staff/appointments/${selectedEvent._id}`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json",Authorization: `Bearer ${localStorage.getItem("token")}`
       },
       body: JSON.stringify({
         title: selectedEvent.title,

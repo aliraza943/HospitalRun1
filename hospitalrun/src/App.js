@@ -14,6 +14,7 @@ import AdminViewCalendar from './pages/calendar/AdminViewCalendar';
 import ViewStaffCalendar from './pages/staff/ViewStaffCalendar'
 import ViewStaffAppoints from './pages/schedule/ViewAppointments'
 import Login from './components/Login'
+import Unauthorized from './pages/Unauthorized/unauthorizedPage';
 
 const App = () => {
   return (
@@ -30,6 +31,7 @@ const App = () => {
         <Route path="/addServices" element={<AddServices />} />
         <Route path="/viewServices" element={<ViewServices />} />
         <Route path="/adminCalendar" element={<AdminViewCalendar />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
       </Routes>
 
     </Router>

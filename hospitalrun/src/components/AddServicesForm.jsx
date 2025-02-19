@@ -25,11 +25,22 @@ const AddServiceForm = () => {
         e.preventDefault();
         setLoading(true);
         setMessage("");
-
+    
         try {
-            const response = await axios.post("http://localhost:8080/api/services/add", service);
+            const response = await axios.post(
+                "http://localhost:8080/api/services/add",
+                service, // Request body (service data)
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
+                    },
+                }
+            );
+    
             setMessage(response.data.message);
             setService({ name: "", duration: "", price: "", category: "Haircut" });
+    
             setTimeout(() => navigate("/viewServices"), 1000);
         } catch (error) {
             setMessage(error.response?.data?.message || "Failed to add service!");
@@ -37,6 +48,7 @@ const AddServiceForm = () => {
             setLoading(false);
         }
     };
+    
 
     return (
         <div className="max-w-lg mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">

@@ -20,7 +20,13 @@ const ViewStaffComp = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch("http://localhost:8080/api/staff")
+        fetch("http://localhost:8080/api/staff", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token
+            },
+        })
             .then((res) => res.json())
             .then((data) => {
                 setStaffList(data);
@@ -28,6 +34,7 @@ const ViewStaffComp = () => {
             })
             .catch((err) => console.error("Error fetching staff:", err));
     }, []);
+    
 
     useEffect(() => {
         setFilteredStaff(
@@ -44,7 +51,10 @@ const ViewStaffComp = () => {
         if (!window.confirm("Are you sure you want to delete this staff member?")) return;
 
         try {
-            await fetch(`http://localhost:8080/api/staff/${id}`, { method: "DELETE" });
+            await fetch(`http://localhost:8080/api/staff/${id}`, { method: "DELETE" , headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token
+            }});
             setStaffList(staffList.filter((staff) => staff._id !== id));
             alert("Staff deleted successfully!");
         } catch (error) {
@@ -64,7 +74,7 @@ const ViewStaffComp = () => {
         try {
             const res = await fetch(`http://localhost:8080/api/staff/${editingStaff}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json" ,   Authorization: `Bearer ${localStorage.getItem("token")}`},
                 body: JSON.stringify(updatedStaff),
             });
 

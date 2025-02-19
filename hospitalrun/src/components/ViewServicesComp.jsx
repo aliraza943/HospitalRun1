@@ -16,17 +16,6 @@ const ViewServicesComp = () => {
     });
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    useEffect(() => {
-        fetch("http://localhost:8080/api/services")
-            .then((res) => res.json())
-            .then((data) => {
-                setServicesList(data);
-                setFilteredServices(data);
-            })
-            .catch((err) => console.error("Error fetching services:", err));
-    }, []);
-
     const handleSearch = (e) => {
         const query = e.target.value.toLowerCase();
         setSearchQuery(query);
@@ -39,11 +28,66 @@ const ViewServicesComp = () => {
         setFilteredServices(filtered);
     };
 
+    
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const res = await fetch("http://localhost:8080/api/services", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
+                    },
+                });
+    
+                if (res.status === 401) {
+                    alert("Unauthorized: You must log in to access this resource.");
+                    return;
+                }
+    
+                if (res.status === 403) {
+                    alert("Forbidden: You do not have permission to view services.");
+                    return;
+                }
+    
+                if (!res.ok) throw new Error("Failed to fetch services.");
+    
+                const data = await res.json();
+                setServicesList(data);
+                setFilteredServices(data);
+            } catch (err) {
+                console.error("Error fetching services:", err);
+            }
+        };
+    
+        fetchServices();
+    }, []);
+   
+
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this service?")) return;
-
+    
         try {
-            await fetch(`http://localhost:8080/api/services/${id}`, { method: "DELETE" });
+            const res = await fetch(`http://localhost:8080/api/services/${id}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+    
+            if (res.status === 401) {
+                alert("Unauthorized: You must log in to delete services.");
+                return;
+            }
+    
+            if (res.status === 403) {
+                alert("Forbidden: You do not have permission to delete this service.");
+                return;
+            }
+    
+            if (!res.ok) throw new Error("Failed to delete service.");
+    
             const updatedList = servicesList.filter((service) => service._id !== id);
             setServicesList(updatedList);
             setFilteredServices(updatedList);
@@ -65,13 +109,28 @@ const ViewServicesComp = () => {
         try {
             const res = await fetch(`http://localhost:8080/api/services/${editingService}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json", 
+                    Authorization: `Bearer ${localStorage.getItem("token")}`  
+                },
                 body: JSON.stringify(updatedService),
             });
-
+    
+            if (res.status === 401) {
+                alert("Unauthorized: You must log in to update services.");
+                return;
+            }
+    
+            if (res.status === 403) {
+                alert("Forbidden: You do not have permission to update this service.");
+                return;
+            }
+    
             if (!res.ok) throw new Error("Failed to update");
-
-            const updatedList = servicesList.map((s) => (s._id === editingService ? updatedService : s));
+    
+            const updatedList = servicesList.map((s) => 
+                s._id === editingService ? updatedService : s
+            );
             setServicesList(updatedList);
             setFilteredServices(updatedList);
             setEditingService(null);
@@ -82,7 +141,6 @@ const ViewServicesComp = () => {
             alert("Failed to update service.");
         }
     };
-
     return (
         <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
             <div className="flex justify-between items-center mb-4">

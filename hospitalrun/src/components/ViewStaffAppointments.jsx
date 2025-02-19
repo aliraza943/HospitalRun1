@@ -7,7 +7,12 @@ const ViewStaffComp = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch("http://localhost:8080/api/staff")
+        fetch("http://localhost:8080/api/staff", {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+            },
+        })
             .then((res) => res.json())
             .then((data) => setStaffList(data))
             .catch((err) => console.error("Error fetching staff:", err));
@@ -32,22 +37,24 @@ const ViewStaffComp = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {staffList.map((staff) => (
-                        <tr key={staff._id} className="border">
-                            <td className="border p-2">{staff.name}</td>
-                            <td className="border p-2">{staff.email}</td>
-                            <td className="border p-2">{staff.phone}</td>
-                            <td className="border p-2">{staff.role}</td>
-                            <td className="border p-2">
-                                <button
-                                    onClick={() => handleManageAppointments(staff)}
-                                    className="text-green-500 text-lg flex items-center gap-2"
-                                >
-                                    <FaCalendarAlt /> Manage Appointments
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
+                    {staffList
+                        .filter((staff) => staff.role !== "frontdesk")
+                        .map((staff) => (
+                            <tr key={staff._id} className="border">
+                                <td className="border p-2">{staff.name}</td>
+                                <td className="border p-2">{staff.email}</td>
+                                <td className="border p-2">{staff.phone}</td>
+                                <td className="border p-2">{staff.role}</td>
+                                <td className="border p-2">
+                                    <button
+                                        onClick={() => handleManageAppointments(staff)}
+                                        className="text-green-500 text-lg flex items-center gap-2"
+                                    >
+                                        <FaCalendarAlt /> Manage Appointments
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
                 </tbody>
             </table>
         </div>
