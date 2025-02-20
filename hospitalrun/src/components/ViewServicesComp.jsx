@@ -41,15 +41,19 @@ const ViewServicesComp = () => {
                 });
     
                 if (res.status === 401) {
-                    alert("Unauthorized: You must log in to access this resource.");
+                    navigate("/unauthorized", {
+                        state: { message: "Your token expired Kindly log back in" },
+                    });
+                    
                     return;
                 }
     
                 if (res.status === 403) {
-                    alert("Forbidden: You do not have permission to view services.");
-                    return;
+                    navigate("/unauthorized", {
+                        state: { message: "You are not authorized to manage services" },
+                    });
+                    return false; // Prevent updating the schedule
                 }
-    
                 if (!res.ok) throw new Error("Failed to fetch services.");
     
                 const data = await res.json();

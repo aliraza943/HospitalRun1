@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import "../styles/calendar.css"; // Custom styles
+import "../styles/calendar.css"; 
+import { useNavigate } from "react-router-dom";// Custom styles
 
 const localizer = momentLocalizer(moment);
 
@@ -18,7 +19,7 @@ const dayToDay = {
 
 const AdminCalendar = () => {
   const [events, setEvents] = useState([]);
-
+const navigate = useNavigate()
   // ----------------------------------------------------------------
   // 1. Fetch schedule when component mounts
   // ----------------------------------------------------------------
@@ -128,12 +129,19 @@ const AdminCalendar = () => {
         });
 
         const data = await res.json();
+        if (res.status === 401) {
+          navigate("/unauthorized", {
+              state: { message: "Your token expired plz log back in" },
+          });
+          return false; // Prevent updating the schedule
+      }
         
         if (res.status === 403) {
-            alert("Forbidden: You do not have permission to update the schedule.");
-           
-            return false; // Prevent adding the event
-        }
+          navigate("/unauthorized", {
+              state: { message: "You are not authorized to manage business hours" },
+          });
+          return false; // Prevent updating the schedule
+      }
 
         if (!res.ok) {
             console.error("Error updating schedule:", data.error);

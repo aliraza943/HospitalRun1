@@ -13,10 +13,28 @@ const ViewStaffComp = () => {
                 "Content-Type": "application/json",
             },
         })
-            .then((res) => res.json())
-            .then((data) => setStaffList(data))
+            .then(async (res) => {
+                if (res.status === 401) {
+                    alert("Your token expired. Kindly log back in.");
+                    localStorage.removeItem("token"); // Clear expired token
+                    navigate("/login"); // Redirect to login page
+                    return null;
+                }
+                
+                if (res.status === 403) {
+                    navigate("/unauthorized", {
+                        state: { message: "You are not authorized to manage appointments" },
+                    });
+                    return null;
+                }
+
+                return res.json();
+            })
+            .then((data) => {
+                if (data) setStaffList(data);
+            })
             .catch((err) => console.error("Error fetching staff:", err));
-    }, []);
+    }, [navigate]);
 
     const handleManageAppointments = (staff) => {
         navigate("/viewStaffAppointments", { state: { staff } });
