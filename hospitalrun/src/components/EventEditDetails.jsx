@@ -94,14 +94,14 @@ const EventDetailsModal = ({
       (range) => newTime >= range.min && newTime <= range.max
     );
 
-    if (!isValidTime) {
-      alert(
-        `Time must be within the available working hours:\n${timeRange
-          .map((r) => `${r.min} - ${r.max}`)
-          .join("\n")}`
-      );
-      return;
-    }
+    // if (!isValidTime) {
+    //   alert(
+    //     `Time must be within the available working hours:\n${timeRange
+    //       .map((r) => `${r.min} - ${r.max}`)
+    //       .join("\n")}`
+    //   );
+    //   return;
+    // }
 
     const [hour, minute] = newTime.split(":");
     const newDateTime = new Date(selectedEvent.start);
