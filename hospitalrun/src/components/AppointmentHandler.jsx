@@ -4,6 +4,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useLocation } from "react-router-dom";
 import { useState, useMemo,useEffect } from "react";
 import EventEditDetails from './EventEditDetails'
+import { useNavigate } from "react-router-dom";
 
 
 const localizer = momentLocalizer(moment);
@@ -17,6 +18,8 @@ const ViewStaffComp = () => {
   const [showEventDetailsModal, setShowEventDetailsModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [timeRange, setTimeRange] = useState({ min: "09:00", max: "18:00" });
+  const [workingHours, setWorkingHours] = useState({});
+  const navigate =useNavigate()
   const [newEvent, setNewEvent] = useState({
     title: "",
     clientName: "",
@@ -139,10 +142,23 @@ const ViewStaffComp = () => {
     try {
       const response = await fetch("http://localhost:8080/api/staff/appointments/add", {
         method: "POST",
-        headers: { "Content-Type": "application/json" , Authorization: `Bearer ${localStorage.getItem("token")}`,},
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
         body: JSON.stringify(appointmentData),
       });
-
+    
+      if (response.status === 401) {
+        navigate("/unauthorized", { state: { message: "Your token expired plz log out and log back in" } });
+        return;
+      }
+    
+      if (response.status === 403) {
+        navigate("/unauthorized", { state: { message: "u dont have permissions to access this" } });
+        return;
+      }
+    
       if (response.ok) {
         fetchAppointments();
         setNewEvent({
@@ -153,14 +169,14 @@ const ViewStaffComp = () => {
           start: null,
           end: null,
         });
-         // Refresh appointments from server
+        // Refresh appointments from server
         setShowModal(false);
+      } else {
+        console.error("Error adding appointment:", response.statusText);
       }
     } catch (error) {
       console.error("Error adding appointment:", error);
-    }
-  };
-  
+    }}
 
 
   

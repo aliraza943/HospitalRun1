@@ -9,10 +9,12 @@ const EventDetailsModal = ({
   handleDeleteEvent,
   workingHours,
 }) => {
-  const [timeRange, setTimeRange] = useState({ min: "09:00", max: "18:00" });
+  // Ensure timeRange is always an array of objects
+  const [timeRange, setTimeRange] = useState([{ min: "09:00", max: "18:00" }]);
   const [isWorkingDay, setIsWorkingDay] = useState(true);
 
   const convertTo24Hour = (time) => {
+    // Expects time in the format "HH:MM AM/PM"
     const [hours, minutes] = time.split(":");
     const [minute, period] = minutes.split(" ");
     let hour24 = parseInt(hours, 10);
@@ -24,88 +26,92 @@ const EventDetailsModal = ({
   const getWorkingHoursForDay = (day) => {
     const hours = workingHours[day];
     if (!hours || hours.length === 0) return null;
-  
-    return hours.map(range => {
+
+    return hours.map((range) => {
       const [start, end] = range.split(" - ");
       return { min: convertTo24Hour(start), max: convertTo24Hour(end) };
     });
   };
+
   // Initialize time range when modal opens or selected event changes
   useEffect(() => {
     if (showEventDetailsModal && selectedEvent && selectedEvent.start) {
       const eventDate = new Date(selectedEvent.start);
       const dayOfWeek = eventDate.toLocaleString("en-US", { weekday: "long" });
       const workingTimeSlots = getWorkingHoursForDay(dayOfWeek);
-  
+
       if (!workingTimeSlots) {
         setIsWorkingDay(false);
-        setTimeRange([]); // Empty array since it's a non-working day
+        setTimeRange([]); // Empty array for a non-working day
       } else {
         setIsWorkingDay(true);
         setTimeRange(workingTimeSlots);
       }
     }
   }, [showEventDetailsModal, selectedEvent, workingHours]);
-  
 
   if (!showEventDetailsModal || !selectedEvent) return null;
 
   const handleDateChange = (e) => {
     const newDate = e.target.value;
     const dayOfWeek = new Date(newDate).toLocaleString("en-US", { weekday: "long" });
-  
     const workingTime = getWorkingHoursForDay(dayOfWeek);
     if (!workingTime) {
       setIsWorkingDay(false);
       alert("This date is not a working day. Please select another date.");
       return;
     }
-  
+
     setIsWorkingDay(true);
     setTimeRange(workingTime);
-  
+
     // Preserve local time instead of converting to UTC
-    const [startHour, startMinute] = workingTime.min.split(":");
-    const [endHour, endMinute] = workingTime.max.split(":");
-  
+    // Use the first working slot from the array
+    const [startHour, startMinute] = workingTime[0].min.split(":");
+    const [endHour, endMinute] = workingTime[0].max.split(":");
+
     const startDateLocal = new Date(newDate);
-    startDateLocal.setHours(parseInt(startHour), parseInt(startMinute), 0, 0);
-  
+    startDateLocal.setHours(parseInt(startHour, 10), parseInt(startMinute, 10), 0, 0);
+
     const endDateLocal = new Date(newDate);
-    endDateLocal.setHours(parseInt(endHour), parseInt(endMinute), 0, 0);
-  
+    endDateLocal.setHours(parseInt(endHour, 10), parseInt(endMinute, 10), 0, 0);
+
     setSelectedEvent({
       ...selectedEvent,
       start: startDateLocal, // Keep local time
       end: endDateLocal,
     });
   };
-  
+
   const handleTimeChange = (e, field) => {
     const newTime = e.target.value;
     const eventDate = selectedEvent.start
       ? new Date(selectedEvent.start).toISOString().split("T")[0]
       : "";
-  
+
     // Check if the selected time falls in any of the valid working slots
-    const isValidTime = timeRange.some(range => newTime >= range.min && newTime <= range.max);
-  
+    const isValidTime = timeRange.some(
+      (range) => newTime >= range.min && newTime <= range.max
+    );
+
     if (!isValidTime) {
-      alert(`Time must be within the available working hours:\n${timeRange.map(r => `${r.min} - ${r.max}`).join("\n")}`);
+      alert(
+        `Time must be within the available working hours:\n${timeRange
+          .map((r) => `${r.min} - ${r.max}`)
+          .join("\n")}`
+      );
       return;
     }
-  
+
     const [hour, minute] = newTime.split(":");
-  
     const newDateTime = new Date(selectedEvent.start);
-    newDateTime.setHours(parseInt(hour), parseInt(minute), 0, 0);
-  
+    newDateTime.setHours(parseInt(hour, 10), parseInt(minute, 10), 0, 0);
+
     setSelectedEvent({
       ...selectedEvent,
       [field]: newDateTime, // Keep local time without converting to UTC
     });
   };
-  
 
   const handleSave = () => {
     if (!isWorkingDay) {
@@ -119,8 +125,8 @@ const EventDetailsModal = ({
   const formatTimeForInput = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${hours}:${minutes}`;
   };
 
@@ -135,7 +141,9 @@ const EventDetailsModal = ({
           type="text"
           className="w-full p-2 border rounded mb-2"
           value={selectedEvent.title}
-          onChange={(e) => setSelectedEvent({ ...selectedEvent, title: e.target.value })}
+          onChange={(e) =>
+            setSelectedEvent({ ...selectedEvent, title: e.target.value })
+          }
         />
 
         {/* Client */}
@@ -144,7 +152,9 @@ const EventDetailsModal = ({
           type="text"
           className="w-full p-2 border rounded mb-2"
           value={selectedEvent.clientName}
-          onChange={(e) => setSelectedEvent({ ...selectedEvent, clientName: e.target.value })}
+          onChange={(e) =>
+            setSelectedEvent({ ...selectedEvent, clientName: e.target.value })
+          }
         />
 
         {/* Service */}
@@ -153,7 +163,9 @@ const EventDetailsModal = ({
           type="text"
           className="w-full p-2 border rounded mb-2"
           value={selectedEvent.serviceType}
-          onChange={(e) => setSelectedEvent({ ...selectedEvent, serviceType: e.target.value })}
+          onChange={(e) =>
+            setSelectedEvent({ ...selectedEvent, serviceType: e.target.value })
+          }
         />
 
         {/* Charges */}
@@ -162,7 +174,9 @@ const EventDetailsModal = ({
           type="number"
           className="w-full p-2 border rounded mb-2"
           value={selectedEvent.serviceCharges}
-          onChange={(e) => setSelectedEvent({ ...selectedEvent, serviceCharges: e.target.value })}
+          onChange={(e) =>
+            setSelectedEvent({ ...selectedEvent, serviceCharges: e.target.value })
+          }
         />
 
         {/* Date Input */}
@@ -170,12 +184,16 @@ const EventDetailsModal = ({
         <input
           type="date"
           className="w-full p-2 border rounded mb-2"
-          value={selectedEvent.start ? new Date(selectedEvent.start).toISOString().split("T")[0] : ""}
+          value={
+            selectedEvent.start
+              ? new Date(selectedEvent.start).toISOString().split("T")[0]
+              : ""
+          }
           onChange={handleDateChange}
         />
 
         {/* Show time inputs only if it's a working day */}
-        {isWorkingDay && (
+        {isWorkingDay && timeRange.length > 0 && (
           <>
             {/* Start Time */}
             <label className="block text-gray-700 font-semibold">Start Time:</label>
@@ -183,8 +201,8 @@ const EventDetailsModal = ({
               type="time"
               className="w-full p-2 border rounded mb-2"
               value={formatTimeForInput(selectedEvent.start)}
-              min={timeRange.min}
-              max={timeRange.max}
+              min={timeRange[0].min}
+              max={timeRange[0].max}
               disabled={!isWorkingDay}
               onChange={(e) => handleTimeChange(e, "start")}
             />
@@ -195,8 +213,8 @@ const EventDetailsModal = ({
               type="time"
               className="w-full p-2 border rounded mb-2"
               value={formatTimeForInput(selectedEvent.end)}
-              min={timeRange.min}
-              max={timeRange.max}
+              min={timeRange[0].min}
+              max={timeRange[0].max}
               disabled={!isWorkingDay}
               onChange={(e) => handleTimeChange(e, "end")}
             />
@@ -204,13 +222,23 @@ const EventDetailsModal = ({
         )}
 
         <div className="flex justify-between mt-4">
-          <button className="bg-gray-500 text-white px-4 py-2 rounded" onClick={() => setShowEventDetailsModal(false)}>
+          <button
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+            onClick={() => setShowEventDetailsModal(false)}
+          >
             Cancel
           </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleSave} disabled={!isWorkingDay}>
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+            onClick={handleSave}
+            disabled={!isWorkingDay}
+          >
             Save
           </button>
-          <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={handleDeleteEvent}>
+          <button
+            className="bg-red-600 text-white px-4 py-2 rounded"
+            onClick={handleDeleteEvent}
+          >
             Delete
           </button>
         </div>

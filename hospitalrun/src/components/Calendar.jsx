@@ -141,13 +141,24 @@ const MyCalendar = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        })
+        });
+
+        // Check for unauthorized (401) or forbidden (403) responses
+        if (res.status === 401) {
+          navigate("/unauthorized", { state: { message: "Your token expired plz log out and log back in" } });
+          return;
+        }
+        if (res.status === 403) {
+          navigate("/unauthorized", { state: { message: "u dont have permissions to access this" } });
+          return;
+        }
+
         const data = await res.json();
 
         if (res.ok) {
-          console.log("Staff Data:", data); // ✅ Log the response
+          console.log("Staff Data:", data);
         } else {
           console.error("Error fetching staff data:", data);
         }
@@ -157,8 +168,7 @@ const MyCalendar = () => {
     };
 
     fetchStaffData();
-  }, [staff]);
-
+  }, [staff, navigate]);
   // Update missing events when the schedule is loaded
   useEffect(() => {
     if (schedule) {

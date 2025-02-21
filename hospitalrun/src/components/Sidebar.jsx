@@ -8,14 +8,36 @@ const SidebarComp = () => {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem("user"));
 
-    const handleScheduleNavigation = () => {
-        if (user?.role === "barber") {
-            navigate("/viewStaffAppointments", { state: { staff: user } });
-        } else {
+    const handleScheduleNavigation = async () => {
+        try {
+          // Fetch the latest schedule (working hours) for the staff member
+          const response = await fetch(`http://localhost:8080/api/staff/schedule/${user._id}`);
+          if (!response.ok) {
+            throw new Error("Failed to fetch working hours");
+          }
+          const schedule= await response.json();
+          const workingHours = schedule.schedule
+      
+          // Update the user object with the fetched working hours
+          const updatedUser = { ...user, workingHours };
+          console.log("THIS IS THE UPDATED USER",updatedUser)
+      
+          // Navigate based on the user's role
+          if (updatedUser.role === "barber") {
+            navigate("/viewStaffAppointments", { state: { staff: updatedUser } });
+          } else {
             navigate("/viewStaffCalendar");
+          }
+        } catch (error) {
+          console.error("Error fetching working hours:", error);
+          // Fallback: navigate without updating the user if fetching fails
+          if (user?.role === "barber") {
+            navigate("/viewStaffAppointments", { state: { staff: user } });
+          } else {
+            navigate("/viewStaffCalendar");
+          }
         }
-    };
-
+      };
     const handleAvailabilityNavigation = () => {
         if (user?.role === "barber") {
             navigate("/view-schedules", { state: { staff: user } });
