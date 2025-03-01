@@ -3,15 +3,14 @@ import SidebarComp from '../../components/Sidebar';
 import Header from '../../components/Header';
 import AddStaffForm from '../../components/AddStaffForm';
 import ViewStaffAppointmentsComp from '../../components/ViewStaffAppointments';
-;
 
 const ViewStaff = () => {
     return (
-        <div className="flex">
+        <div className="flex h-screen">
             {/* Sidebar */}
             <SidebarComp />
 
-            <div className="flex-1">
+            <div className="flex-1 overflow-y-auto">
                 {/* Header */}
                 <Header />
 

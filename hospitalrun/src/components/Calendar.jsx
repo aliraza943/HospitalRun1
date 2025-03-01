@@ -150,10 +150,10 @@ const MyCalendar = () => {
           navigate("/unauthorized", { state: { message: "Your token expired plz log out and log back in" } });
           return;
         }
-        if (res.status === 403) {
-          navigate("/unauthorized", { state: { message: "u dont have permissions to access this" } });
-          return;
-        }
+        // if (res.status === 403) {
+        //   navigate("/unauthorized", { state: { message: "u dont have permissions to access this" } });
+        //   return;
+        // }
 
         const data = await res.json();
 
