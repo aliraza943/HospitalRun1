@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom";
 import { useState, useMemo, useEffect } from "react";
 import EventEditDetails from "./EventEditDetails";
 import { useNavigate } from "react-router-dom";
+import NewAppointmentModal from "./NewAppointmentModal";
 
 const localizer = momentLocalizer(moment);
 
@@ -323,6 +324,17 @@ const ViewStaffCompAdmin = ({ staff }) => {
     }
     return nonWorkingEvents;
   };
+  const handleCancelNewAppointment = () => {
+    setShowModal(false);
+    setNewEvent({
+      title: "",
+      clientName: "",
+      serviceType: "",
+      charges: "",
+      start: null,
+      end: null,
+    });
+  };
 
   const generateNonWorkingEvents = () => {
     if (!staff) return [];
@@ -507,59 +519,13 @@ const ViewStaffCompAdmin = ({ staff }) => {
         </div>
       )}
 
-      {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-bold mb-4">New Appointment</h2>
-
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded mb-2"
-              value={newEvent.title}
-              onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-            />
-
-            <label className="block text-sm font-medium mb-1">Client Name</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded mb-2"
-              value={newEvent.clientName}
-              onChange={(e) => setNewEvent({ ...newEvent, clientName: e.target.value })}
-            />
-
-            <label className="block text-sm font-medium mb-1">Service Type</label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded mb-2"
-              value={newEvent.serviceType}
-              onChange={(e) => setNewEvent({ ...newEvent, serviceType: e.target.value })}
-            />
-
-            <label className="block text-sm font-medium mb-1">Charges</label>
-            <input
-              type="number"
-              className="w-full p-2 border rounded mb-4"
-              value={newEvent.charges}
-              onChange={(e) => setNewEvent({ ...newEvent, charges: e.target.value })}
-            />
-
-            <div className="flex justify-end">
-              <button
-                className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded"
-                onClick={handleSubmitEvent}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
+      {showModal && (<NewAppointmentModal
+          newEvent={newEvent}
+          setNewEvent={setNewEvent}
+          handleSubmitEvent={handleSubmitEvent}
+          onCancel={handleCancelNewAppointment}
+          staff={staff}
+        />
       )}
 
       {showEventDetailsModal && selectedEvent && (
@@ -571,6 +537,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
           handleUpdateEvent={handleUpdateEvent}
           handleDeleteEvent={handleDeleteEvent}
           workingHours={staff.workingHours}
+          staffservices={staff.services}
         />
       )}
     </>

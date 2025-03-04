@@ -8,21 +8,25 @@ const EventDetailsModal = ({
   handleUpdateEvent,
   handleDeleteEvent,
   workingHours,
+  staffservices, // Array of service IDs that belong to the staff member
 }) => {
-  // Ensure timeRange is always an array of objects
+  // State for time range and working day check
   const [timeRange, setTimeRange] = useState([{ min: "09:00", max: "18:00" }]);
   const [isWorkingDay, setIsWorkingDay] = useState(true);
+  // State for available services fetched from API
+  const [services, setServices] = useState([]);
 
+  // Helper: Convert time in "HH:MM AM/PM" to "HH:MM" 24-hour format
   const convertTo24Hour = (time) => {
-    // Expects time in the format "HH:MM AM/PM"
     const [hours, minutes] = time.split(":");
-    const [minute, period] = minutes.split(" ");
+    const [min, period] = minutes.split(" ");
     let hour24 = parseInt(hours, 10);
     if (period === "PM" && hour24 !== 12) hour24 += 12;
     if (period === "AM" && hour24 === 12) hour24 = 0;
-    return `${String(hour24).padStart(2, "0")}:${minute}`;
+    return `${String(hour24).padStart(2, "0")}:${min}`;
   };
 
+  // Helper: Get working hours for a day from workingHours prop
   const getWorkingHoursForDay = (day) => {
     const hours = workingHours[day];
     if (!hours || hours.length === 0) return null;
@@ -33,7 +37,7 @@ const EventDetailsModal = ({
     });
   };
 
-  // Initialize time range when modal opens or selected event changes
+  // Initialize time range when modal opens or selectedEvent changes
   useEffect(() => {
     if (showEventDetailsModal && selectedEvent && selectedEvent.start) {
       const eventDate = new Date(selectedEvent.start);
@@ -42,7 +46,7 @@ const EventDetailsModal = ({
 
       if (!workingTimeSlots) {
         setIsWorkingDay(false);
-        setTimeRange([]); // Empty array for a non-working day
+        setTimeRange([]); // Non-working day
       } else {
         setIsWorkingDay(true);
         setTimeRange(workingTimeSlots);
@@ -50,23 +54,52 @@ const EventDetailsModal = ({
     }
   }, [showEventDetailsModal, selectedEvent, workingHours]);
 
-  if (!showEventDetailsModal || !selectedEvent) return null;
+  // Fetch services from the API on mount
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:8080/api/services/serviceTypes/serviceDetails",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Failed to fetch services");
+        const data = await response.json();
+        setServices(data);
+      } catch (error) {
+        console.error("Error fetching services:", error);
+      }
+    };
 
+    fetchServices();
+  }, []);
+
+  // Filter the services so that only those with an id in staffservices are shown
+  const filteredServices =
+    staffservices && staffservices.length > 0
+      ? services.filter((s) => staffservices.includes(s._id))
+      : services;
+
+  // Handle date change and update working hours accordingly
   const handleDateChange = (e) => {
     const newDate = e.target.value;
-    const dayOfWeek = new Date(newDate).toLocaleString("en-US", { weekday: "long" });
+    const dayOfWeek = new Date(newDate).toLocaleString("en-US", {
+      weekday: "long",
+    });
     const workingTime = getWorkingHoursForDay(dayOfWeek);
     if (!workingTime) {
       setIsWorkingDay(false);
       alert("This date is not a working day. Please select another date.");
       return;
     }
-
     setIsWorkingDay(true);
     setTimeRange(workingTime);
 
-    // Preserve local time instead of converting to UTC
-    // Use the first working slot from the array
+    // Update selectedEvent with new start/end times using first working slot
     const [startHour, startMinute] = workingTime[0].min.split(":");
     const [endHour, endMinute] = workingTime[0].max.split(":");
 
@@ -78,42 +111,34 @@ const EventDetailsModal = ({
 
     setSelectedEvent({
       ...selectedEvent,
-      start: startDateLocal, // Keep local time
+      start: startDateLocal,
       end: endDateLocal,
     });
   };
 
+  // Handle time changes for start/end times
   const handleTimeChange = (e, field) => {
     const newTime = e.target.value;
-    const eventDate = selectedEvent.start
-      ? new Date(selectedEvent.start).toISOString().split("T")[0]
-      : "";
-
-    // Check if the selected time falls in any of the valid working slots
-    const isValidTime = timeRange.some(
-      (range) => newTime >= range.min && newTime <= range.max
-    );
-
-    // if (!isValidTime) {
-    //   alert(
-    //     `Time must be within the available working hours:\n${timeRange
-    //       .map((r) => `${r.min} - ${r.max}`)
-    //       .join("\n")}`
-    //   );
-    //   return;
-    // }
-
     const [hour, minute] = newTime.split(":");
     const newDateTime = new Date(selectedEvent.start);
     newDateTime.setHours(parseInt(hour, 10), parseInt(minute, 10), 0, 0);
-
     setSelectedEvent({
       ...selectedEvent,
-      [field]: newDateTime, // Keep local time without converting to UTC
+      [field]: newDateTime,
     });
   };
 
+  // Save the event details after validation
   const handleSave = () => {
+    // Validate that required fields are not empty
+    if (
+      !selectedEvent.title ||
+      !selectedEvent.clientName ||
+      !selectedEvent.serviceType
+    ) {
+      alert("Please fill the form");
+      return;
+    }
     if (!isWorkingDay) {
       alert("You cannot save an event on a non-working day.");
       return;
@@ -121,7 +146,7 @@ const EventDetailsModal = ({
     handleUpdateEvent();
   };
 
-  // Helper function to format time in local time for input[type="time"]
+  // Helper: Format a date string to HH:MM for input[type="time"]
   const formatTimeForInput = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -129,6 +154,9 @@ const EventDetailsModal = ({
     const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${hours}:${minutes}`;
   };
+
+  // Return null if modal should not be shown
+  if (!showEventDetailsModal || !selectedEvent) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
@@ -157,26 +185,49 @@ const EventDetailsModal = ({
           }
         />
 
-        {/* Service */}
+        {/* Service Dropdown */}
         <label className="block text-gray-700 font-semibold">Service:</label>
-        <input
-          type="text"
+        <select
           className="w-full p-2 border rounded mb-2"
-          value={selectedEvent.serviceType}
-          onChange={(e) =>
-            setSelectedEvent({ ...selectedEvent, serviceType: e.target.value })
+          value={
+            // We assume selectedEvent.serviceType holds the service name.
+            // Find the matching service _id; if none, default to an empty string.
+            services.find((s) => s.name === selectedEvent.serviceType)?._id ||
+            ""
           }
-        />
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            const selectedService = services.find((s) => s._id === selectedId);
+            if (selectedService) {
+              setSelectedEvent({
+                ...selectedEvent,
+                serviceType: selectedService.name,
+                serviceCharges: selectedService.price,
+              });
+            } else {
+              setSelectedEvent({
+                ...selectedEvent,
+                serviceType: "",
+                serviceCharges: "",
+              });
+            }
+          }}
+        >
+          <option value="">Select a Service</option>
+          {filteredServices.map((service) => (
+            <option key={service._id} value={service._id}>
+              {service.name}
+            </option>
+          ))}
+        </select>
 
-        {/* Charges */}
+        {/* Charges (auto-populated based on service selection) */}
         <label className="block text-gray-700 font-semibold">Charges:</label>
         <input
           type="number"
           className="w-full p-2 border rounded mb-2"
           value={selectedEvent.serviceCharges}
-          onChange={(e) =>
-            setSelectedEvent({ ...selectedEvent, serviceCharges: e.target.value })
-          }
+          readOnly
         />
 
         {/* Date Input */}
@@ -192,10 +243,9 @@ const EventDetailsModal = ({
           onChange={handleDateChange}
         />
 
-        {/* Show time inputs only if it's a working day */}
+        {/* Time Inputs (only show if it's a working day) */}
         {isWorkingDay && timeRange.length > 0 && (
           <>
-            {/* Start Time */}
             <label className="block text-gray-700 font-semibold">Start Time:</label>
             <input
               type="time"
@@ -207,7 +257,6 @@ const EventDetailsModal = ({
               onChange={(e) => handleTimeChange(e, "start")}
             />
 
-            {/* End Time */}
             <label className="block text-gray-700 font-semibold">End Time:</label>
             <input
               type="time"

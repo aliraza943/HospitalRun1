@@ -22,9 +22,12 @@ const ViewStaffComp = () => {
     phone: "",
     role: "",
     workingHours: "",
-    // For frontdesk users, permissions will be stored as an object, e.g. { manage_services: true, ... }
-    permissions: [],
+    // For frontdesk users, permissions will be stored as an object.
+    permissions: {},
+    // For barber/provider, services is an array of selected service IDs.
+    services: [],
   });
+  const [services, setServices] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -40,13 +43,13 @@ const ViewStaffComp = () => {
       .then((res) => {
         if (res.status === 401) {
           navigate("/unauthorized", {
-            state: { message: "Your token expired Please log back in" },
+            state: { message: "Your token expired. Please log back in." },
           });
           return null;
         }
         if (res.status === 403) {
           navigate("/unauthorized", {
-            state: { message: "You are not authorized to manage staff" },
+            state: { message: "You are not authorized to manage staff." },
           });
           return null;
         }
@@ -60,6 +63,22 @@ const ViewStaffComp = () => {
       })
       .catch((err) => console.error("Error fetching staff:", err));
   }, [navigate]);
+
+  // Fetch services list from API (for barber role)
+  useEffect(() => {
+    fetch("http://localhost:8080/api/services/serviceTypes/serviceDetails", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch services");
+        return res.json();
+      })
+      .then((data) => setServices(data))
+      .catch((error) => console.error("Error fetching services:", error));
+  }, []);
 
   // Filter staff list based on search query
   useEffect(() => {
@@ -94,25 +113,36 @@ const ViewStaffComp = () => {
     }
   };
 
-  // Open modal for editing and set default permissions for frontdesk users
+  // Open modal for editing staff.
+  // For frontdesk users, convert permissions array to an object.
+  // For barbers, ensure services are set as an array.
   const handleEdit = (staff) => {
     setEditingStaff(staff._id);
     const updatedStaffData = { ...staff };
 
     if (staff.role === "frontdesk") {
-      // Convert the staff.permissions array into an object mapping each permission to a boolean.
       let permissionsObj = {};
       permissionOptions.forEach((perm) => {
         permissionsObj[perm] = staff.permissions.includes(perm);
       });
       updatedStaffData.permissions = permissionsObj;
     }
+    
+    if (staff.role === "barber") {
+      // Ensure services are stored as an array.
+      updatedStaffData.services = Array.isArray(staff.services)
+        ? staff.services
+        : staff.service
+        ? [staff.service]
+        : [];
+    }
 
     setUpdatedStaff(updatedStaffData);
+    console.log(updatedStaff);
     setIsModalOpen(true);
   };
 
-  // Handle radio button changes for a specific permission
+  // Handle radio button changes for a specific permission (for frontdesk).
   const handlePermissionChange = (perm, value) => {
     setUpdatedStaff((prev) => ({
       ...prev,
@@ -127,14 +157,13 @@ const ViewStaffComp = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      // If the role is frontdesk, convert the permissions object to an array
+      // For frontdesk, convert permissions object to an array.
       let payload = { ...updatedStaff };
       if (updatedStaff.role === "frontdesk") {
         payload.permissions = Object.entries(updatedStaff.permissions)
           .filter(([key, value]) => value)
           .map(([key]) => key);
       }
-
       const res = await fetch(`http://localhost:8080/api/staff/${editingStaff}`, {
         method: "PUT",
         headers: {
@@ -159,6 +188,24 @@ const ViewStaffComp = () => {
   // Navigate to schedule view
   const handleSchedule = (staff) => {
     navigate("/view-schedules", { state: { staff } });
+  };
+
+  // Handle toggling a service checkbox
+  const handleServiceToggle = (serviceId) => {
+    const currentServices = updatedStaff.services || [];
+    if (currentServices.includes(serviceId)) {
+      // Remove if already selected.
+      setUpdatedStaff({
+        ...updatedStaff,
+        services: currentServices.filter((id) => id !== serviceId),
+      });
+    } else {
+      // Add to selected services.
+      setUpdatedStaff({
+        ...updatedStaff,
+        services: [...currentServices, serviceId],
+      });
+    }
   };
 
   return (
@@ -261,6 +308,27 @@ const ViewStaffComp = () => {
                 <option value="barber">Barber/Provider</option>
                 <option value="frontdesk">Front Desk</option>
               </select>
+
+              {/* Checkboxes for Service Selection for Barber Role */}
+              {updatedStaff.role === "barber" && (
+                <div className="mt-4">
+                  <label className="block mb-1 font-medium">Services</label>
+                  {services.map((service) => (
+                    <div key={service._id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="services"
+                        value={service._id}
+                        checked={updatedStaff.services.includes(service._id)}
+                        onChange={() => handleServiceToggle(service._id)}
+                      />
+                      <span>{service.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Permissions for Frontdesk Role */}
               {updatedStaff.role === "frontdesk" && (
                 <div className="mt-4">
                   <label className="block mb-1 font-medium">Permissions</label>
@@ -291,6 +359,7 @@ const ViewStaffComp = () => {
                   ))}
                 </div>
               )}
+
               <div className="flex justify-end space-x-2">
                 <button
                   type="button"

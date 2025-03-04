@@ -4,7 +4,9 @@ import ViewStaffCompAdmin from "./StaffAppointmentAdmin"; // Import the componen
 
 const ViewStaffComp = () => {
     const [staffList, setStaffList] = useState([]);
+    const [filteredStaffList, setFilteredStaffList] = useState([]);
     const [selectedStaff, setSelectedStaff] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -35,6 +37,7 @@ const ViewStaffComp = () => {
                 if (data) {
                     const filteredStaff = data.filter((staff) => staff.role !== "frontdesk");
                     setStaffList(filteredStaff);
+                    setFilteredStaffList(filteredStaff);
                     if (filteredStaff.length > 0) {
                         setSelectedStaff(filteredStaff[0]); // Default to first staff
                     }
@@ -43,9 +46,26 @@ const ViewStaffComp = () => {
             .catch((err) => console.error("Error fetching staff:", err));
     }, [navigate]);
 
+    // Filter staff based on search term
+    useEffect(() => {
+        const filtered = staffList.filter((staff) =>
+            staff.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredStaffList(filtered);
+    }, [searchTerm, staffList]);
+
     return (
         <div className="max-w-6xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg min-h-screen max-h-screen overflow-y-auto flex flex-col">
             <h2 className="text-2xl font-semibold mb-4">Select Staff Member</h2>
+
+            {/* Search Bar */}
+            <input
+                type="text"
+                className="w-full p-2 border rounded-md mb-4"
+                placeholder="Search staff..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
 
             {/* Staff Dropdown */}
             <select
@@ -56,7 +76,7 @@ const ViewStaffComp = () => {
                     setSelectedStaff(staff || null);
                 }}
             >
-                {staffList.map((staff) => (
+                {filteredStaffList.map((staff) => (
                     <option key={staff._id} value={staff._id}>
                         {staff.name} - {staff.role}
                     </option>
