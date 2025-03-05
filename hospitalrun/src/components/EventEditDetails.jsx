@@ -8,13 +8,16 @@ const EventDetailsModal = ({
   handleUpdateEvent,
   handleDeleteEvent,
   workingHours,
-  staffservices, // Array of service IDs that belong to the staff member
+  staffservices,
+  staff, // Array of service IDs that belong to the staff member
 }) => {
   // State for time range and working day check
   const [timeRange, setTimeRange] = useState([{ min: "09:00", max: "18:00" }]);
   const [isWorkingDay, setIsWorkingDay] = useState(true);
   // State for available services fetched from API
   const [services, setServices] = useState([]);
+  // State for available clients fetched from API
+  const [clients, setClients] = useState([]);
 
   // Helper: Convert time in "HH:MM AM/PM" to "HH:MM" 24-hour format
   const convertTo24Hour = (time) => {
@@ -30,7 +33,6 @@ const EventDetailsModal = ({
   const getWorkingHoursForDay = (day) => {
     const hours = workingHours[day];
     if (!hours || hours.length === 0) return null;
-
     return hours.map((range) => {
       const [start, end] = range.split(" - ");
       return { min: convertTo24Hour(start), max: convertTo24Hour(end) };
@@ -43,7 +45,6 @@ const EventDetailsModal = ({
       const eventDate = new Date(selectedEvent.start);
       const dayOfWeek = eventDate.toLocaleString("en-US", { weekday: "long" });
       const workingTimeSlots = getWorkingHoursForDay(dayOfWeek);
-
       if (!workingTimeSlots) {
         setIsWorkingDay(false);
         setTimeRange([]); // Non-working day
@@ -74,11 +75,35 @@ const EventDetailsModal = ({
         console.error("Error fetching services:", error);
       }
     };
-
     fetchServices();
   }, []);
 
-  // Filter the services so that only those with an id in staffservices are shown
+  // Fetch client data using staff._id
+  useEffect(() => {
+    if (!staff?._id) return; // Ensure staff._id is available
+    const fetchClients = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/clientelle/providerClient/${staff._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Failed to fetch client data");
+        const data = await response.json();
+        console.log("Clients Data fetched:", data);
+        setClients(data);
+      } catch (error) {
+        console.error("Error fetching client data:", error);
+      }
+    };
+    fetchClients();
+  }, [staff?._id]);
+
+  // Filter only services assigned to the staff
   const filteredServices =
     staffservices && staffservices.length > 0
       ? services.filter((s) => staffservices.includes(s._id))
@@ -98,17 +123,12 @@ const EventDetailsModal = ({
     }
     setIsWorkingDay(true);
     setTimeRange(workingTime);
-
-    // Update selectedEvent with new start/end times using first working slot
     const [startHour, startMinute] = workingTime[0].min.split(":");
     const [endHour, endMinute] = workingTime[0].max.split(":");
-
     const startDateLocal = new Date(newDate);
     startDateLocal.setHours(parseInt(startHour, 10), parseInt(startMinute, 10), 0, 0);
-
     const endDateLocal = new Date(newDate);
     endDateLocal.setHours(parseInt(endHour, 10), parseInt(endMinute, 10), 0, 0);
-
     setSelectedEvent({
       ...selectedEvent,
       start: startDateLocal,
@@ -130,12 +150,7 @@ const EventDetailsModal = ({
 
   // Save the event details after validation
   const handleSave = () => {
-    // Validate that required fields are not empty
-    if (
-      !selectedEvent.title ||
-      !selectedEvent.clientName ||
-      !selectedEvent.serviceType
-    ) {
+    if (!selectedEvent.clientName || !selectedEvent.clientId || !selectedEvent.serviceType) {
       alert("Please fill the form");
       return;
     }
@@ -155,7 +170,6 @@ const EventDetailsModal = ({
     return `${hours}:${minutes}`;
   };
 
-  // Return null if modal should not be shown
   if (!showEventDetailsModal || !selectedEvent) return null;
 
   return (
@@ -163,37 +177,40 @@ const EventDetailsModal = ({
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
         <h2 className="text-xl font-bold mb-4">Edit Event Details</h2>
 
-        {/* Title */}
-        <label className="block text-gray-700 font-semibold">Title:</label>
-        <input
-          type="text"
-          className="w-full p-2 border rounded mb-2"
-          value={selectedEvent.title}
-          onChange={(e) =>
-            setSelectedEvent({ ...selectedEvent, title: e.target.value })
-          }
-        />
-
-        {/* Client */}
+        {/* Client Dropdown */}
         <label className="block text-gray-700 font-semibold">Client:</label>
-        <input
-          type="text"
+        <select
           className="w-full p-2 border rounded mb-2"
-          value={selectedEvent.clientName}
-          onChange={(e) =>
-            setSelectedEvent({ ...selectedEvent, clientName: e.target.value })
+          value={
+            clients.find((client) => client.username === selectedEvent.clientName)
+              ?._id || ""
           }
-        />
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            const selectedClient = clients.find((client) => client._id === selectedId);
+            if (selectedClient) {
+              setSelectedEvent({
+                ...selectedEvent,
+                clientName: selectedClient.username,
+                clientId: selectedClient._id,
+              });
+            }
+          }}
+        >
+          <option value="">Select a Client</option>
+          {clients.map((client) => (
+            <option key={client._id} value={client._id}>
+              {client.username}
+            </option>
+          ))}
+        </select>
 
         {/* Service Dropdown */}
         <label className="block text-gray-700 font-semibold">Service:</label>
         <select
           className="w-full p-2 border rounded mb-2"
           value={
-            // We assume selectedEvent.serviceType holds the service name.
-            // Find the matching service _id; if none, default to an empty string.
-            services.find((s) => s.name === selectedEvent.serviceType)?._id ||
-            ""
+            services.find((s) => s.name === selectedEvent.serviceType)?._id || ""
           }
           onChange={(e) => {
             const selectedId = e.target.value;
@@ -212,6 +229,7 @@ const EventDetailsModal = ({
               });
             }
           }}
+          disabled={filteredServices.length === 0}
         >
           <option value="">Select a Service</option>
           {filteredServices.map((service) => (

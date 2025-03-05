@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ViewStaffCompAdmin from "./StaffAppointmentAdmin"; // Import the component
 
@@ -7,7 +7,9 @@ const ViewStaffComp = () => {
     const [filteredStaffList, setFilteredStaffList] = useState([]);
     const [selectedStaff, setSelectedStaff] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [dropdownOpen, setDropdownOpen] = useState(false);
     const navigate = useNavigate();
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         fetch("http://localhost:8080/api/staff", {
@@ -40,6 +42,7 @@ const ViewStaffComp = () => {
                     setFilteredStaffList(filteredStaff);
                     if (filteredStaff.length > 0) {
                         setSelectedStaff(filteredStaff[0]); // Default to first staff
+                        setSearchTerm(filteredStaff[0].name); // Set default input value
                     }
                 }
             })
@@ -54,34 +57,54 @@ const ViewStaffComp = () => {
         setFilteredStaffList(filtered);
     }, [searchTerm, staffList]);
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     return (
         <div className="max-w-6xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg min-h-screen max-h-screen overflow-y-auto flex flex-col">
             <h2 className="text-2xl font-semibold mb-4">Select Staff Member</h2>
 
-            {/* Search Bar */}
-            <input
-                type="text"
-                className="w-full p-2 border rounded-md mb-4"
-                placeholder="Search staff..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            {/* Search Bar with Attached Dropdown */}
+            <div className="relative w-full" ref={dropdownRef}>
+                <input
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded-t-md focus:outline-none"
+                    placeholder="Search staff..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => setDropdownOpen(true)} // Show dropdown when input is focused
+                />
 
-            {/* Staff Dropdown */}
-            <select
-                className="w-full p-2 border rounded-md mb-4"
-                value={selectedStaff?._id || ""}
-                onChange={(e) => {
-                    const staff = staffList.find((s) => s._id === e.target.value);
-                    setSelectedStaff(staff || null);
-                }}
-            >
-                {filteredStaffList.map((staff) => (
-                    <option key={staff._id} value={staff._id}>
-                        {staff.name} - {staff.role}
-                    </option>
-                ))}
-            </select>
+                {dropdownOpen && (
+                    <div className="absolute w-full bg-white border border-gray-300 rounded-b-md shadow-lg max-h-60 overflow-y-auto z-10">
+                        {filteredStaffList.length > 0 ? (
+                            filteredStaffList.map((staff) => (
+                                <div
+                                    key={staff._id}
+                                    className="p-2 hover:bg-gray-200 cursor-pointer"
+                                    onClick={() => {
+                                        setSelectedStaff(staff);
+                                        setSearchTerm(staff.name); // Set selected name in input
+                                        setDropdownOpen(false); // Close dropdown
+                                    }}
+                                >
+                                    {staff.name} - {staff.role}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="p-2 text-gray-500">No staff found</div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Content Section */}
             {selectedStaff && (

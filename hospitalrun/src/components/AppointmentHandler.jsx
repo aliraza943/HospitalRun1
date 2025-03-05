@@ -138,6 +138,7 @@ const ViewStaffComp = () => {
       charges: newEvent.charges,
       start: formattedStartUTC.toDate(), // Convert back to Date for server
       end: formattedEndUTC.toDate(),
+      clientId:newEvent.clientId
     };
 
     try {
@@ -451,14 +452,15 @@ const handleUpdateEvent = async () => {
         "Content-Type": "application/json",Authorization: `Bearer ${localStorage.getItem("token")}`
       },
       body: JSON.stringify({
-        title: selectedEvent.title,
+        title: selectedEvent.clientName,
         clientName: selectedEvent.clientName,
         serviceType: selectedEvent.serviceType,
         serviceCharges: selectedEvent.serviceCharges,
         date: new Date(selectedEvent.start).toISOString().split("T")[0], // Extracts date part only
         start: startUTC, // Now properly formatted as UTC ISO 8601
         end: endUTC,
-        staffId:selectedEvent.staffId// Now properly formatted as UTC ISO 8601
+        staffId:selectedEvent.staffId,
+        clientId:selectedEvent.clientId// Now properly formatted as UTC ISO 8601
       }),
     });
 
@@ -563,6 +565,7 @@ return (
   handleDeleteEvent={handleDeleteEvent}
   workingHours={staff.workingHours}
   staffservices={staff.services}
+  staff={staff}
 />
 )}
 

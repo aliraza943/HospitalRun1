@@ -15,7 +15,9 @@ import ViewStaffCalendar from './pages/staff/ViewStaffCalendar'
 import ViewStaffAppoints from './pages/schedule/ViewAppointments'
 import Login from './components/Login'
 import Unauthorized from './pages/Unauthorized/unauthorizedPage';
-
+import ViewClientele from './pages/Clientele/ViewClientele'
+import AddClienteleForm from './pages/Clientele/AddClientele';
+import AdminViewClientele from "./pages/Clientele/ViewAdminClientele"
 const App = () => {
   return (
     <Router>
@@ -32,6 +34,9 @@ const App = () => {
         <Route path="/viewServices" element={<ViewServices />} />
         <Route path="/adminCalendar" element={<AdminViewCalendar />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/providerViewClientele" element={<ViewClientele />} />
+        <Route path="/addClienteleForm" element={<AddClienteleForm />} />
+        <Route path="/adminViewClientele" element={<AdminViewClientele />} />
       </Routes>
 
     </Router>

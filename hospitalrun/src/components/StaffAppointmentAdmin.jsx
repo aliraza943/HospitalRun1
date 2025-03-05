@@ -136,6 +136,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
       charges: newEvent.charges,
       start: formattedStartUTC.toDate(), // Convert back to Date for server
       end: formattedEndUTC.toDate(),
+      clientId:newEvent.clientId
     };
 
     try {
@@ -432,7 +433,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          title: selectedEvent.title,
+          title: selectedEvent.clientName,
           clientName: selectedEvent.clientName,
           serviceType: selectedEvent.serviceType,
           serviceCharges: selectedEvent.serviceCharges,
@@ -440,6 +441,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
           start: startUTC,
           end: endUTC,
           staffId: selectedEvent.staffId,
+          clientId:selectedEvent.clientId
         }),
       });
 
@@ -473,17 +475,17 @@ const ViewStaffCompAdmin = ({ staff }) => {
           <p className="mb-4">{/* Optionally display workingRangeDisplay here */}</p>
 
           {/* Date Input to jump to a specific date */}
-          <div className="mb-4">
-            <label htmlFor="jumpDate" className="mr-2 font-semibold">
-              Jump to Date:
-            </label>
-            <input
-              type="date"
-              id="jumpDate"
-              onChange={handleDateInputChange}
-              className="border p-2 rounded"
-            />
-          </div>
+          <div className="mb-4 flex justify-center items-center">
+    <label htmlFor="jumpDate" className="mr-2 font-semibold">
+        Jump to Date:
+    </label>
+    <input
+        type="date"
+        id="jumpDate"
+        onChange={handleDateInputChange}
+        className="border p-2 rounded"
+    />
+</div>
 
           {/* CSS to hide entire day columns with no working hours */}
           <style>
@@ -538,6 +540,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
           handleDeleteEvent={handleDeleteEvent}
           workingHours={staff.workingHours}
           staffservices={staff.services}
+          staff={staff}
         />
       )}
     </>

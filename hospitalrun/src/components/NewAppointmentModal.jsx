@@ -5,9 +5,10 @@ const NewAppointmentModal = ({
   setNewEvent,
   handleSubmitEvent,
   onCancel,
-  staff
+  staff,
 }) => {
   const [serviceTypes, setServiceTypes] = useState([]);
+  const [clients, setClients] = useState([]);
 
   // Log newEvent data every time it updates
   useEffect(() => {
@@ -28,7 +29,7 @@ const NewAppointmentModal = ({
           }
         );
         if (!response.ok) {
-          throw new Error(response.message);
+          throw new Error("Failed to fetch services");
         }
         const data = await response.json();
         console.log("API Data fetched in NewAppointmentModal:", data);
@@ -41,16 +42,43 @@ const NewAppointmentModal = ({
     fetchAPIData();
   }, []);
 
-  // Filter the service types based on the staff's services field.
-  // Only show those services whose _id is included in staff.services.
-  const filteredServiceTypes = staff && staff.services && staff.services.length > 0 
-    ? serviceTypes.filter((service) => staff.services.includes(service._id))
-    : serviceTypes;
+  // Fetch Client Data using staff.id
+  useEffect(() => {
+    if (!staff?._id) return; // Ensure staff.id is available
+
+    const fetchClients = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/clientelle/providerClient/${staff._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch client data");
+        }
+        const data = await response.json();
+        console.log("Clients Data fetched:", data);
+        setClients(data);
+      } catch (error) {
+        console.error("Error fetching client data:", error);
+      }
+    };
+
+    fetchClients();
+  }, [staff?._id]);
+
+  // Filter only services assigned to the staff
+  const filteredServiceTypes = serviceTypes.filter((service) =>
+    staff?.services?.includes(service._id)
+  );
 
   // Handler for service type dropdown change
   const handleServiceTypeChange = (e) => {
     const selectedId = e.target.value;
-    // Find the selected service object by its _id
     const selectedService = serviceTypes.find(
       (service) => service._id === selectedId
     );
@@ -67,7 +95,6 @@ const NewAppointmentModal = ({
         selectedService.price
       );
     } else {
-      // If no valid selection, clear the fields
       setNewEvent({
         ...newEvent,
         serviceType: "",
@@ -76,44 +103,59 @@ const NewAppointmentModal = ({
     }
   };
 
+  // Handler for client dropdown change
+  const handleClientChange = (e) => {
+    const selectedId = e.target.value;
+    const selectedClient = clients.find((client) => client._id === selectedId);
+    if (selectedClient) {
+      setNewEvent({
+        ...newEvent,
+        clientName: selectedClient.username,
+        title: selectedClient.username, // Automatically set title to client name
+        clientId: selectedClient._id, // Store client ID as well
+      });
+      console.log("Selected Client:", selectedClient.username);
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
         <h2 className="text-xl font-bold mb-4">New Appointment</h2>
 
-        <label className="block text-sm font-medium mb-1">Title</label>
-        <input
-          type="text"
-          className="w-full p-2 border rounded mb-2"
-          value={newEvent.title}
-          onChange={(e) => {
-            setNewEvent({ ...newEvent, title: e.target.value });
-            console.log("Title updated:", e.target.value);
-          }}
-        />
-
         <label className="block text-sm font-medium mb-1">Client Name</label>
-        <input
-          type="text"
+        <select
           className="w-full p-2 border rounded mb-2"
-          value={newEvent.clientName}
-          onChange={(e) => {
-            setNewEvent({ ...newEvent, clientName: e.target.value });
-            console.log("Client Name updated:", e.target.value);
-          }}
-        />
+          value={
+            clients.find((client) => client.username === newEvent.clientName)
+              ?._id || ""
+          }
+          onChange={handleClientChange}
+        >
+          <option value="">Select a Client</option>
+          {clients.map((client) => (
+            <option key={client._id} value={client._id}>
+              {client.username}
+            </option>
+          ))}
+        </select>
 
-        {/* Dropdown for Service Type */}
+        {/* Show message if no services are assigned */}
+        {filteredServiceTypes.length === 0 && (
+          <p className="text-red-500 text-sm mb-1">
+            The services for this user have not been set.
+          </p>
+        )}
+
         <label className="block text-sm font-medium mb-1">Service Type</label>
         <select
           className="w-full p-2 border rounded mb-2"
           value={
-            // If newEvent.serviceType holds the name, find the matching service _id.
-            serviceTypes.find(
-              (service) => service.name === newEvent.serviceType
-            )?._id || ""
+            serviceTypes.find((service) => service.name === newEvent.serviceType)
+              ?._id || ""
           }
           onChange={handleServiceTypeChange}
+          disabled={filteredServiceTypes.length === 0} // Disable if no services exist
         >
           <option value="">Select a Service Type</option>
           {filteredServiceTypes.map((service) => (
@@ -123,7 +165,6 @@ const NewAppointmentModal = ({
           ))}
         </select>
 
-        {/* Charges field, auto-populated from selected service type */}
         <label className="block text-sm font-medium mb-1">Charges</label>
         <input
           type="number"
@@ -141,7 +182,13 @@ const NewAppointmentModal = ({
           </button>
           <button
             className="bg-blue-600 text-white px-4 py-2 rounded"
-            onClick={handleSubmitEvent}
+            onClick={() => {
+              if (filteredServiceTypes.length === 0) {
+                alert("The services for this user have not been set.");
+                return;
+              }
+              handleSubmitEvent();
+            }}
           >
             Save
           </button>
