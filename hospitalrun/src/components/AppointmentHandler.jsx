@@ -1,17 +1,21 @@
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { useLocation } from "react-router-dom";
-import { useState, useMemo,useEffect } from "react";
-import EventEditDetails from './EventEditDetails'
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import EventEditDetails from "./EventEditDetails";
 import NewAppointmentModal from "./NewAppointmentModal";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
+// If not already configured in your root component, you can call toast.configure()
+// toast.configure();
 
 const localizer = momentLocalizer(moment);
 
 const ViewStaffComp = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const staff = location.state?.staff;
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
@@ -20,7 +24,6 @@ const ViewStaffComp = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [timeRange, setTimeRange] = useState({ min: "09:00", max: "18:00" });
   const [workingHours, setWorkingHours] = useState({});
-  const navigate =useNavigate()
   const [newEvent, setNewEvent] = useState({
     title: "",
     clientName: "",
@@ -29,17 +32,17 @@ const ViewStaffComp = () => {
     start: null,
     end: null,
   });
+
   useEffect(() => {
     fetchAppointments();
   }, [staff]);
-
 
   const fetchAppointments = async () => {
     if (!staff) return;
     try {
       const response = await fetch(`http://localhost:8080/api/staff/appointments/${staff._id}`);
       const data = await response.json();
-      console.log(data)
+      console.log(data);
       if (response.ok) {
         setAppointments(data);
       }
@@ -60,15 +63,21 @@ const ViewStaffComp = () => {
     const dayOfWeek = selectedStartUTC.format("dddd");
     const workingSlots = staff.workingHours[dayOfWeek];
     if (!workingSlots || workingSlots.length === 0) {
-      alert("No working hours for this day.");
+      toast.error("No working hours for this day.");
       return;
     }
 
     let isWithinWorkingHours = false;
     workingSlots.forEach((slot) => {
       const [startStr, endStr] = slot.split(" - ");
-      const slotStart = moment(selectedStartUTC.format("YYYY-MM-DD") + " " + startStr, "YYYY-MM-DD h:mm A").utc();
-      const slotEnd = moment(selectedStartUTC.format("YYYY-MM-DD") + " " + endStr, "YYYY-MM-DD h:mm A").utc();
+      const slotStart = moment(
+        selectedStartUTC.format("YYYY-MM-DD") + " " + startStr,
+        "YYYY-MM-DD h:mm A"
+      ).utc();
+      const slotEnd = moment(
+        selectedStartUTC.format("YYYY-MM-DD") + " " + endStr,
+        "YYYY-MM-DD h:mm A"
+      ).utc();
 
       if (
         selectedStartUTC.isBetween(slotStart, slotEnd, null, "[)") &&
@@ -79,7 +88,7 @@ const ViewStaffComp = () => {
     });
 
     if (!isWithinWorkingHours) {
-      alert("Selected slot is outside working hours.");
+      toast.error("Selected slot is outside working hours.");
       return;
     }
 
@@ -95,10 +104,9 @@ const ViewStaffComp = () => {
     });
 
     if (isSlotOccupied) {
-      alert("This time slot is already occupied. Please select a different time.");
+      toast.error("This time slot is already occupied. Please select a different time.");
       return;
     }
- 
 
     setNewEvent({ ...newEvent, start, end });
     setShowModal(true);
@@ -106,7 +114,7 @@ const ViewStaffComp = () => {
 
   const handleSubmitEvent = async () => {
     if (!newEvent.title || !newEvent.clientName || !newEvent.serviceType || !newEvent.charges) {
-      alert("Please fill all fields.");
+      toast.error("Please fill all fields.");
       return;
     }
 
@@ -126,7 +134,7 @@ const ViewStaffComp = () => {
     });
 
     if (isSlotOccupied) {
-      alert("This time slot is already occupied. Please select a different time.");
+      toast.error("This time slot is already occupied. Please select a different time.");
       return;
     }
 
@@ -136,9 +144,9 @@ const ViewStaffComp = () => {
       clientName: newEvent.clientName,
       serviceType: newEvent.serviceType,
       charges: newEvent.charges,
-      start: formattedStartUTC.toDate(), // Convert back to Date for server
+      start: formattedStartUTC.toDate(),
       end: formattedEndUTC.toDate(),
-      clientId:newEvent.clientId
+      clientId: newEvent.clientId,
     };
 
     try {
@@ -150,17 +158,21 @@ const ViewStaffComp = () => {
         },
         body: JSON.stringify(appointmentData),
       });
-    
+
       if (response.status === 401) {
-        navigate("/unauthorized", { state: { message: "Your token expired plz log out and log back in" } });
+        navigate("/unauthorized", {
+          state: { message: "Your token expired plz log out and log back in" },
+        });
         return;
       }
-    
+
       if (response.status === 403) {
-        navigate("/unauthorized", { state: { message: "u dont have permissions to access this" } });
+        navigate("/unauthorized", {
+          state: { message: "u dont have permissions to access this" },
+        });
         return;
       }
-    
+
       if (response.ok) {
         fetchAppointments();
         setNewEvent({
@@ -171,17 +183,15 @@ const ViewStaffComp = () => {
           start: null,
           end: null,
         });
-        // Refresh appointments from server
         setShowModal(false);
       } else {
         console.error("Error adding appointment:", response.statusText);
       }
     } catch (error) {
       console.error("Error adding appointment:", error);
-    }}
+    }
+  };
 
-
-  
   const dayNameToIndex = {
     Sunday: 0,
     Monday: 1,
@@ -192,12 +202,10 @@ const ViewStaffComp = () => {
     Saturday: 6,
   };
 
-  // Determine which days have workingHours set to null.
   const nonWorkingDays = Object.entries(staff?.workingHours || {})
     .filter(([_, hours]) => hours === null)
     .map(([day]) => dayNameToIndex[day] + 1);
 
-  // Hide a day entirely if there are no working hours.
   const customDayPropGetter = (date) => {
     const dayOfWeek = moment(date).format("dddd");
     if (!staff?.workingHours[dayOfWeek]) {
@@ -210,19 +218,7 @@ const ViewStaffComp = () => {
     setCurrentDate(newDate);
   };
 
-  // -----------------------------
-  // 1. Compute the overall working range
-  // -----------------------------
-  //
-  // We loop through all days (that are not null) and for each time slot
-  // parse the start and end times (using a dummy date "2000-01-01") so that
-  // we can compare them. The earliest start time and the latest end time are
-  // then used as the boundaries for the day.
-  //
-  // Note: If a staff member has no working hours (or staff is not loaded),
-  // default values will be provided.
   const workingRange = useMemo(() => {
-    // Use a dummy date to compare times.
     let minTime = moment("2000-01-01 23:59", "YYYY-MM-DD HH:mm");
     let maxTime = moment("2000-01-01 00:00", "YYYY-MM-DD HH:mm");
 
@@ -244,24 +240,22 @@ const ViewStaffComp = () => {
     return { min: minTime.toDate(), max: maxTime.toDate() };
   }, [staff]);
 
-
-  const handleEventSelect =  (event) => {
+  const handleEventSelect = (event) => {
     if (event.title === "Non Working Hours") return;
     setSelectedEvent(event);
-    console.log("THIS EVENMT",event)
-    
-    setShowEventDetailsModal(true);// Prevent deletion of non-working hours
-  
-    
+    console.log("THIS EVENT", event);
+    setShowEventDetailsModal(true);
   };
+
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
-  
+
     try {
       const response = await fetch("http://localhost:8080/api/staff/appointments/delete", {
         method: "DELETE",
         headers: {
-          "Content-Type": "application/json",Authorization: `Bearer ${localStorage.getItem("token")}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
           staffId: staff._id,
@@ -269,7 +263,7 @@ const ViewStaffComp = () => {
           end: selectedEvent.end,
         }),
       });
-  
+
       if (response.ok) {
         setAppointments(appointments.filter((appt) => appt._id !== selectedEvent._id));
         setShowEventDetailsModal(false);
@@ -278,22 +272,8 @@ const ViewStaffComp = () => {
       console.error("Error deleting appointment:", error);
     }
   };
-  
-  
 
-  // -----------------------------
-  // 2. Generate non‐working events using the computed boundaries
-  // -----------------------------
-  //
-  // For each day with defined working slots, we’ll:
-  // - Set the day’s start and end boundaries by applying the hours/minutes of
-  //   workingRange.min/max to the specific day.
-  // - Parse each working slot and create “Non Working Hours” events for:
-  //   - The gap before the first slot
-  //   - Gaps between slots
-  //   - The gap after the last slot
   const generateNonWorkingEventsForDay = (day, workingSlots, dayMin, dayMax) => {
-    // Set the boundaries for the specific day using the computed workingRange.
     const dayStart = moment(day).set({
       hour: moment(dayMin).hour(),
       minute: moment(dayMin).minute(),
@@ -307,7 +287,6 @@ const ViewStaffComp = () => {
       millisecond: 0,
     });
 
-    // Parse each working slot into moment objects.
     const intervals = workingSlots.map((slot) => {
       const [startStr, endStr] = slot.split(" - ");
       const startTime = moment(day.format("YYYY-MM-DD") + " " + startStr, "YYYY-MM-DD h:mm A");
@@ -315,11 +294,9 @@ const ViewStaffComp = () => {
       return { start: startTime, end: endTime };
     });
 
-    // Sort by start time.
     intervals.sort((a, b) => a.start - b.start);
 
     const nonWorkingEvents = [];
-    // If there’s a gap before the first working slot.
     if (intervals.length > 0 && dayStart.isBefore(intervals[0].start)) {
       nonWorkingEvents.push({
         title: "Non Working Hours",
@@ -327,7 +304,6 @@ const ViewStaffComp = () => {
         end: intervals[0].start.toDate(),
       });
     }
-    // Gaps between working slots.
     for (let i = 0; i < intervals.length - 1; i++) {
       if (intervals[i].end.isBefore(intervals[i + 1].start)) {
         nonWorkingEvents.push({
@@ -337,7 +313,6 @@ const ViewStaffComp = () => {
         });
       }
     }
-    // If there’s a gap after the last working slot.
     if (intervals.length > 0 && intervals[intervals.length - 1].end.isBefore(dayEnd)) {
       nonWorkingEvents.push({
         title: "Non Working Hours",
@@ -351,9 +326,7 @@ const ViewStaffComp = () => {
   const generateNonWorkingEvents = () => {
     if (!staff) return [];
     let events = [];
-    // Get the start of the current week (Sunday by default).
     const startOfWeek = moment(currentDate).startOf("week");
-    // Loop through the 7 days.
     for (let i = 0; i < 7; i++) {
       const day = moment(startOfWeek).add(i, "days");
       const dayName = day.format("dddd");
@@ -366,213 +339,196 @@ const ViewStaffComp = () => {
     return events;
   };
 
-  // Memoize the non-working events so that they update when either staff or the current date changes.
   const nonWorkingEvents = useMemo(() => (staff ? generateNonWorkingEvents() : []), [staff, currentDate, workingRange]);
   const events = useMemo(() => {
     if (!staff) return [];
-  
-    // Format appointments correctly
+
     const formattedAppointments = appointments.map((appointment) => ({
-      ...appointment, // Spread all appointment properties
+      ...appointment,
       title: appointment.title || "Booked Appointment",
       start: moment(appointment.start).toDate(),
       end: moment(appointment.end).toDate(),
       clientName: appointment.clientName,
       serviceType: appointment.serviceType,
-      serviceCharges: appointment.serviceCharges // Note: matching the name used in modal
+      serviceCharges: appointment.serviceCharges,
     }));
-  
-    // Combine appointments with non-working hours
+
     return [...formattedAppointments, ...nonWorkingEvents];
   }, [staff, appointments, nonWorkingEvents]);
-  
 
-  // Format the working range for display.
   const workingRangeDisplay = `${moment(workingRange.min).format("h:mm A")} - ${moment(workingRange.max).format("h:mm A")}`;
   const eventStyleGetter = (event) => {
     if (event.title === "Non Working Hours") {
       return {
-        className: 'non-working-hours',
+        className: "non-working-hours",
         style: {
-          backgroundColor: '#808080 !important',
-          color: '#fff',
-          borderRadius: '0px',
-          border: 'none',
+          backgroundColor: "#808080 !important",
+          color: "#fff",
+          borderRadius: "0px",
+          border: "none",
           opacity: 1,
-          pointerEvents: 'none',
-          cursor: 'default'
-        }
+          pointerEvents: "none",
+          cursor: "default",
+        },
       };
     }
     return {
-      className: 'working-appointment',
+      className: "working-appointment",
       style: {
-        backgroundColor: '#3174ad !important',
-        color: 'white',
-        borderRadius: '5px',
-        border: 'none'
-      }
+        backgroundColor: "#3174ad !important",
+        color: "white",
+        borderRadius: "5px",
+        border: "none",
+      },
     };
   };
+
   const customStyles = `
-  .rbc-event.non-working-hours {
-    background-color: #808080 !important;
-  }
-  .rbc-event.non-working-hours:hover {
-    background-color: #808080 !important;
-  }
-  .rbc-event.working-appointment {
-    background-color: #3174ad !important;
-  }
-  .rbc-event.working-appointment:hover {
-    background-color: #3174ad !important;
-  }
-  .rbc-event.rbc-selected {
-    background-color: inherit !important;
-  }
-  .rbc-event {
-    background-color: #3174ad !important;
-  }
-`;
-const handleUpdateEvent = async () => {
-  console.log("THIS EVENT WAS TRIGGERED");
-  if (!selectedEvent) return;
-  
-  console.log("The data being set", selectedEvent);
-
-  try {
-    // Convert local date to UTC ISO format
-    const startUTC = new Date(selectedEvent.start).toISOString();
-    const endUTC = new Date(selectedEvent.end).toISOString();
-   
-
-    const response = await fetch(`http://localhost:8080/api/staff/appointments/${selectedEvent._id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",Authorization: `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify({
-        title: selectedEvent.clientName,
-        clientName: selectedEvent.clientName,
-        serviceType: selectedEvent.serviceType,
-        serviceCharges: selectedEvent.serviceCharges,
-        date: new Date(selectedEvent.start).toISOString().split("T")[0], // Extracts date part only
-        start: startUTC, // Now properly formatted as UTC ISO 8601
-        end: endUTC,
-        staffId:selectedEvent.staffId,
-        clientId:selectedEvent.clientId// Now properly formatted as UTC ISO 8601
-      }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      alert("Appointment updated successfully!");
-      fetchAppointments();
-      setShowEventDetailsModal(false); // Close modal after update
-    } else {
-      alert(`Error: ${data.message}`);
+    .rbc-event.non-working-hours {
+      background-color: #808080 !important;
     }
-  } catch (error) {
-    console.error("Update Error:", error);
-    alert("Failed to update the appointment.");
-  }
-};
-const handleCancelNewAppointment = () => {
-  setShowModal(false);
-  setNewEvent({
-    title: "",
-    clientName: "",
-    serviceType: "",
-    charges: "",
-    start: null,
-    end: null,
-  });
-};
+    .rbc-event.non-working-hours:hover {
+      background-color: #808080 !important;
+    }
+    .rbc-event.working-appointment {
+      background-color: #3174ad !important;
+    }
+    .rbc-event.working-appointment:hover {
+      background-color: #3174ad !important;
+    }
+    .rbc-event.rbc-selected {
+      background-color: inherit !important;
+    }
+    .rbc-event {
+      background-color: #3174ad !important;
+    }
+  `;
 
+  const handleUpdateEvent = async () => {
+    console.log("THIS EVENT WAS TRIGGERED");
+    if (!selectedEvent) return;
 
+    console.log("The data being set", selectedEvent);
 
-  
-const isAllDaysNull = Object.values(staff.workingHours).every((day) => day === null);
-return (
-<>
-{isAllDaysNull ? (
-  <div className="w-full mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-    <h2 className="text-2xl font-semibold text-center text-gray-500">
-      The working hours of this employee are not set.
-    </h2>
-  </div>
-) : (
-  <div className="w-full mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-    <h2 className="text-2xl font-semibold mb-4">Staff Appointments</h2>
+    try {
+      const startUTC = new Date(selectedEvent.start).toISOString();
+      const endUTC = new Date(selectedEvent.end).toISOString();
 
-    {/* Display the overall working hours range */}
-    <p className="mb-4">
-      <strong>Working Hours:</strong> {workingRangeDisplay}
-    </p>
+      const response = await fetch(`http://localhost:8080/api/staff/appointments/${selectedEvent._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          title: selectedEvent.clientName,
+          clientName: selectedEvent.clientName,
+          serviceType: selectedEvent.serviceType,
+          serviceCharges: selectedEvent.serviceCharges,
+          date: new Date(selectedEvent.start).toISOString().split("T")[0],
+          start: startUTC,
+          end: endUTC,
+          staffId: selectedEvent.staffId,
+          clientId: selectedEvent.clientId,
+        }),
+      });
 
-    {/* CSS to hide entire day columns with no working hours */}
-    <style>
-      {`
-        ${nonWorkingDays.map((nth) => `.rbc-day-bg:nth-child(${nth}) { display: none; }`).join("\n")}
-        ${customStyles}
-      `}
-    </style>
-    <div style={{ pointerEvents: showModal || showEventDetailsModal? "none" : "auto" }}>
+      const data = await response.json();
 
-    <Calendar
-      localizer={localizer}
-      events={events}
-      date={currentDate}
-      onNavigate={handleNavigate}
-      defaultView="week"
-      views={["week", "day"]}
-      startAccessor="start"
-      endAccessor="end"
-      style={{ height: 600, width: "100%" }}
-      step={60}
-      timeslots={1}
-      dayPropGetter={customDayPropGetter}
-      onSelectSlot={handleSlotSelect}
-      onSelectEvent={handleEventSelect}
-      selectable={true}
-      // Use the computed working range to limit the visible hours.
-      min={workingRange.min}
-      max={workingRange.max}
-      eventPropGetter={eventStyleGetter}
-    />
-  </div>
-  </div>
-)}
+      if (response.ok) {
+        toast.success("Appointment updated successfully!");
+        fetchAppointments();
+        setShowEventDetailsModal(false);
+      } else {
+        toast.error(`Error: ${data.message}`);
+      }
+    } catch (error) {
+      console.error("Update Error:", error);
+      toast.error("Failed to update the appointment.");
+    }
+  };
 
-{showModal && (
-  <NewAppointmentModal
-  newEvent={newEvent}
-  setNewEvent={setNewEvent}
-  handleSubmitEvent={handleSubmitEvent}
-  onCancel={handleCancelNewAppointment}
-  staff={staff}
-/>
-)}
+  const handleCancelNewAppointment = () => {
+    setShowModal(false);
+    setNewEvent({
+      title: "",
+      clientName: "",
+      serviceType: "",
+      charges: "",
+      start: null,
+      end: null,
+    });
+  };
 
-{showEventDetailsModal && selectedEvent && (
-  <EventEditDetails
-  showEventDetailsModal={showEventDetailsModal}
-  selectedEvent={selectedEvent}
-  setSelectedEvent={setSelectedEvent}
-  setShowEventDetailsModal={setShowEventDetailsModal}
-  handleUpdateEvent={handleUpdateEvent}
-  handleDeleteEvent={handleDeleteEvent}
-  workingHours={staff.workingHours}
-  staffservices={staff.services}
-  staff={staff}
-/>
-)}
-
-
-</>
-);
+  const isAllDaysNull = Object.values(staff?.workingHours || {}).every((day) => day === null);
+  return (
+    <>
+      {isAllDaysNull ? (
+        <div className="w-full mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+          <h2 className="text-2xl font-semibold text-center text-gray-500">
+            The working hours of this employee are not set.
+          </h2>
+        </div>
+      ) : (
+        <div className="w-full mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+          <h2 className="text-2xl font-semibold mb-4">Staff Appointments</h2>
+          <p className="mb-4">
+            <strong>Working Hours:</strong> {workingRangeDisplay}
+          </p>
+          <style>
+            {`
+              ${nonWorkingDays.map((nth) => `.rbc-day-bg:nth-child(${nth}) { display: none; }`).join("\n")}
+              ${customStyles}
+            `}
+          </style>
+          <div style={{ pointerEvents: showModal || showEventDetailsModal ? "none" : "auto" }}>
+            <Calendar
+              localizer={localizer}
+              events={events}
+              date={currentDate}
+              onNavigate={handleNavigate}
+              defaultView="week"
+              views={["week", "day"]}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: 600, width: "100%" }}
+              step={60}
+              timeslots={1}
+              dayPropGetter={customDayPropGetter}
+              onSelectSlot={handleSlotSelect}
+              onSelectEvent={handleEventSelect}
+              selectable={true}
+              min={workingRange.min}
+              max={workingRange.max}
+              eventPropGetter={eventStyleGetter}
+            />
+          </div>
+        </div>
+      )}
+      {showModal && (
+        <NewAppointmentModal
+          newEvent={newEvent}
+          setNewEvent={setNewEvent}
+          handleSubmitEvent={handleSubmitEvent}
+          onCancel={handleCancelNewAppointment}
+          staff={staff}
+        />
+      )}
+      {showEventDetailsModal && selectedEvent && (
+        <EventEditDetails
+          showEventDetailsModal={showEventDetailsModal}
+          selectedEvent={selectedEvent}
+          setSelectedEvent={setSelectedEvent}
+          setShowEventDetailsModal={setShowEventDetailsModal}
+          handleUpdateEvent={handleUpdateEvent}
+          handleDeleteEvent={handleDeleteEvent}
+          workingHours={staff.workingHours}
+          staffservices={staff.services}
+          staff={staff}
+        />
+      )}
+    </>
+  );
 };
 
 export default ViewStaffComp;
-

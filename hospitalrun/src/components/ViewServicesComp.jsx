@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ViewServicesComp = () => {
     const navigate = useNavigate();
@@ -14,8 +16,8 @@ const ViewServicesComp = () => {
         duration: "",
         description: "",
     });
-
     const [isModalOpen, setIsModalOpen] = useState(false);
+
     const handleSearch = (e) => {
         const query = e.target.value.toLowerCase();
         setSearchQuery(query);
@@ -28,7 +30,6 @@ const ViewServicesComp = () => {
         setFilteredServices(filtered);
     };
 
-    
     useEffect(() => {
         const fetchServices = async () => {
             try {
@@ -39,23 +40,22 @@ const ViewServicesComp = () => {
                         Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
                     },
                 });
-    
+
                 if (res.status === 401) {
                     navigate("/unauthorized", {
                         state: { message: "Your token expired Kindly log back in" },
                     });
-                    
                     return;
                 }
-    
+
                 if (res.status === 403) {
                     navigate("/unauthorized", {
                         state: { message: "You are not authorized to manage services" },
                     });
-                    return false; // Prevent updating the schedule
+                    return;
                 }
                 if (!res.ok) throw new Error("Failed to fetch services.");
-    
+
                 const data = await res.json();
                 setServicesList(data);
                 setFilteredServices(data);
@@ -63,10 +63,9 @@ const ViewServicesComp = () => {
                 console.error("Error fetching services:", err);
             }
         };
-    
+
         fetchServices();
-    }, []);
-   
+    }, [navigate]);
 
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this service?")) return;
@@ -81,12 +80,12 @@ const ViewServicesComp = () => {
             });
     
             if (res.status === 401) {
-                alert("Unauthorized: You must log in to delete services.");
+                toast.error("Unauthorized: You must log in to delete services.");
                 return;
             }
     
             if (res.status === 403) {
-                alert("Forbidden: You do not have permission to delete this service.");
+                toast.error("Forbidden: You do not have permission to delete this service.");
                 return;
             }
     
@@ -95,10 +94,10 @@ const ViewServicesComp = () => {
             const updatedList = servicesList.filter((service) => service._id !== id);
             setServicesList(updatedList);
             setFilteredServices(updatedList);
-            alert("Service deleted successfully!");
+            toast.success("Service deleted successfully!");
         } catch (error) {
             console.error("Error deleting service:", error);
-            alert("Failed to delete service.");
+            toast.error("Failed to delete service.");
         }
     };
 
@@ -121,32 +120,34 @@ const ViewServicesComp = () => {
             });
     
             if (res.status === 401) {
-                alert("Unauthorized: You must log in to update services.");
+                toast.error("Unauthorized: You must log in to update services.");
                 return;
             }
     
             if (res.status === 403) {
-                alert("Forbidden: You do not have permission to update this service.");
+                toast.error("Forbidden: You do not have permission to update this service.");
                 return;
             }
     
             if (!res.ok) throw new Error("Failed to update");
     
-            const updatedList = servicesList.map((s) => 
+            const updatedList = servicesList.map((s) =>
                 s._id === editingService ? updatedService : s
             );
             setServicesList(updatedList);
             setFilteredServices(updatedList);
             setEditingService(null);
             setIsModalOpen(false);
-            alert("Service updated successfully!");
+            toast.success("Service updated successfully!");
         } catch (error) {
             console.error("Error updating service:", error);
-            alert("Failed to update service.");
+            toast.error("Failed to update service.");
         }
     };
+
     return (
         <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+            <ToastContainer />
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-semibold">Services List</h2>
                 <button
@@ -212,7 +213,9 @@ const ViewServicesComp = () => {
                                 type="text"
                                 name="name"
                                 value={updatedService.name}
-                                onChange={(e) => setUpdatedService({ ...updatedService, name: e.target.value })}
+                                onChange={(e) =>
+                                    setUpdatedService({ ...updatedService, name: e.target.value })
+                                }
                                 className="w-full p-2 border rounded"
                                 required
                             />
@@ -220,7 +223,9 @@ const ViewServicesComp = () => {
                                 type="number"
                                 name="price"
                                 value={updatedService.price}
-                                onChange={(e) => setUpdatedService({ ...updatedService, price: e.target.value })}
+                                onChange={(e) =>
+                                    setUpdatedService({ ...updatedService, price: e.target.value })
+                                }
                                 className="w-full p-2 border rounded"
                                 required
                             />
@@ -228,14 +233,18 @@ const ViewServicesComp = () => {
                                 type="number"
                                 name="duration"
                                 value={updatedService.duration}
-                                onChange={(e) => setUpdatedService({ ...updatedService, duration: e.target.value })}
+                                onChange={(e) =>
+                                    setUpdatedService({ ...updatedService, duration: e.target.value })
+                                }
                                 className="w-full p-2 border rounded"
                                 required
                             />
                             <textarea
                                 name="description"
                                 value={updatedService.description}
-                                onChange={(e) => setUpdatedService({ ...updatedService, description: e.target.value })}
+                                onChange={(e) =>
+                                    setUpdatedService({ ...updatedService, description: e.target.value })
+                                }
                                 className="w-full p-2 border rounded"
                                 required
                             />

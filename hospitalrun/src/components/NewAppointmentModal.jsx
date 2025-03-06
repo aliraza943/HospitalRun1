@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const NewAppointmentModal = ({
   newEvent,
@@ -120,6 +122,7 @@ const NewAppointmentModal = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+      <ToastContainer />
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
         <h2 className="text-xl font-bold mb-4">New Appointment</h2>
 
@@ -184,7 +187,7 @@ const NewAppointmentModal = ({
             className="bg-blue-600 text-white px-4 py-2 rounded"
             onClick={() => {
               if (filteredServiceTypes.length === 0) {
-                alert("The services for this user have not been set.");
+                toast.error("The services for this user have not been set.");
                 return;
               }
               handleSubmitEvent();

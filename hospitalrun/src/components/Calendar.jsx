@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import format from "date-fns/format";
@@ -8,7 +8,8 @@ import startOfWeek from "date-fns/startOfWeek";
 import getDay from "date-fns/getDay";
 import { enUS } from "date-fns/locale";
 import { addHours, parse as parseDate } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const locales = { "en-US": enUS };
 const localizer = dateFnsLocalizer({
@@ -48,8 +49,6 @@ const MyCalendar = () => {
   const [workingEvents, setWorkingEvents] = useState([]);
   const [fetchedWorkingEvents, setFetchedWorkingEvents] = useState([]);
   const navigate = useNavigate();
-
-
 
   // Function to generate "missing" (non-working) event slots based on API schedule
   const generateMissingEvents = (apiSchedule) => {
@@ -115,10 +114,10 @@ const MyCalendar = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
-  
+
         const data = await res.json();
         if (res.ok && data.schedule) {
           setSchedule(data.schedule);
@@ -127,10 +126,9 @@ const MyCalendar = () => {
         console.error("Fetch error:", err);
       }
     };
-  
+
     fetchSchedule();
   }, []);
-  
 
   useEffect(() => {
     const fetchStaffData = async () => {
@@ -145,15 +143,12 @@ const MyCalendar = () => {
           },
         });
 
-        // Check for unauthorized (401) or forbidden (403) responses
         if (res.status === 401) {
-          navigate("/unauthorized", { state: { message: "Your token expired plz log out and log back in" } });
+          navigate("/unauthorized", {
+            state: { message: "Your token expired plz log out and log back in" },
+          });
           return;
         }
-        // if (res.status === 403) {
-        //   navigate("/unauthorized", { state: { message: "u dont have permissions to access this" } });
-        //   return;
-        // }
 
         const data = await res.json();
 
@@ -169,6 +164,7 @@ const MyCalendar = () => {
 
     fetchStaffData();
   }, [staff, navigate]);
+
   // Update missing events when the schedule is loaded
   useEffect(() => {
     if (schedule) {
@@ -180,139 +176,145 @@ const MyCalendar = () => {
   // Handler for selecting a slot by clicking and dragging on the calendar
   const handleSelectSlot = async (slotInfo) => {
     const { start, end } = slotInfo;
-  
+
     if (!schedule || !staff?._id) {
-      alert("Schedule or staff data not loaded.");
+      toast.error("Schedule or staff data not loaded.");
       return;
     }
-  
+
     // Check for client-side overlaps
+    const events = [...missingEvents, ...workingEvents, ...fetchedWorkingEvents];
     const isOverlapping = events.some(
       (event) => start < event.end && end > event.start
     );
     if (isOverlapping) {
-      alert("Time slot occupied.");
+      toast.error("Time slot occupied.");
       return;
     }
-  
-    const title ="Working Event"
+
+    const title = "Working Event";
     if (!title || title !== "Working Event") return;
-  
+
     try {
       const newEvent = { title, start, end };
       console.log("New working event created:", newEvent);
-  
-      // Update state and ensure the latest copy is used
+
       setWorkingEvents((prev) => {
         const updatedEvents = [...prev, newEvent];
         console.log("Updated working events:", updatedEvents);
-  
+
         // Convert to the schedule format
         const updatedSchedule = mapEventsToSchedule(updatedEvents);
         console.log("Updated schedule:", updatedSchedule);
-  
-        return updatedEvents; // Ensure state is properly updated
+
+        return updatedEvents;
       });
     } catch (err) {
       console.error("Error:", err);
-      alert("Update failed. Check console for details.");
+      toast.error("Update failed. Check console for details.");
     }
   };
-  
+
   // Function to format events into the desired structure
   const formatTime = (date) => {
     const options = { hour: "numeric", minute: "2-digit", hour12: true };
     return new Intl.DateTimeFormat("en-US", options).format(date);
   };
-  
+
   const mapEventsToSchedule = (events) => {
-    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const daysOfWeek = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
     const schedule = daysOfWeek.reduce((acc, day) => ({ ...acc, [day]: null }), {});
-  
+
     events.forEach(({ start, end }) => {
       const day = daysOfWeek[start.getDay()];
       const timeRange = `${formatTime(start)} - ${formatTime(end)}`;
-  
+
       if (!schedule[day]) {
         schedule[day] = [timeRange];
       } else {
         schedule[day].push(timeRange);
       }
     });
-  
+
     return schedule;
   };
+
   const handleSelectEvent = async (event) => {
     if (event.title !== "Working Event") return;
-  
+
     const confirmDelete = window.confirm("Do you want to remove this working event?");
     if (!confirmDelete) return;
-  
+
     setWorkingEvents((prevEvents) =>
       prevEvents.filter((e) => e.start !== event.start || e.end !== event.end)
     );
-  
+
     setFetchedWorkingEvents((prevFetchedEvents) =>
       prevFetchedEvents.filter((e) => e.start !== event.start || e.end !== event.end)
     );
-  
+
     try {
-      await updateScheduleAPI(workingEvents); // Update the backend
+      await updateScheduleAPI(workingEvents);
       console.log("Event successfully removed and schedule updated.");
     } catch (error) {
       console.error("Failed to update after deleting event:", error);
     }
   };
-  
-  
-  
+
   // Track changes in workingEvents using useEffect
-  const updateScheduleAPI = async (combinedEvents, navigate) => {
+  const updateScheduleAPI = async (combinedEvents) => {
     if (!staff?._id) {
       console.error("Staff ID is missing.");
       return;
     }
-  
-    // Convert combined events to the schedule format.
+
     const updatedSchedule = mapEventsToSchedule(combinedEvents);
     const apiUrl = `http://localhost:8080/api/staff/update-schedule/${staff._id}`;
-  
+
     try {
       const response = await fetch(apiUrl, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({ schedule: updatedSchedule }),
       });
-  
+
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           navigate("/unauthorized", {
-            state: { message: "You are not authorized to modify the employee schedule." },
+            state: {
+              message: "You are not authorized to modify the employee schedule.",
+            },
           });
           return;
         }
         throw new Error(`API error: ${response.statusText}`);
       }
-  
+
       const result = await response.json();
       console.log("Schedule successfully updated:", result);
     } catch (error) {
       console.error("Failed to update schedule:", error);
     }
   };
-  
-  
-  // useEffect now depends on both workingEvents and fetchedWorkingEvents.
-  // It combines them and sends the updated schedule to the backend.
+
   useEffect(() => {
     const combinedEvents = [...workingEvents, ...fetchedWorkingEvents];
     if (combinedEvents.length > 0) {
-      updateScheduleAPI(combinedEvents,navigate);
+      updateScheduleAPI(combinedEvents, navigate);
     }
   }, [workingEvents, fetchedWorkingEvents]);
+
   useEffect(() => {
     const fetchWorkingEvents = async () => {
       console.log("THE STAFF ID IS", staff._id);
@@ -320,13 +322,13 @@ const MyCalendar = () => {
         const res = await fetch(`http://localhost:8080/api/staff/schedule/${staff._id}`);
         const data = await res.json();
         console.log("THIS WAS THE DATA", data.schedule);
-  
+
         if (res.ok && data.schedule) {
           const baseDate = new Date();
-          const formattedEvents = Object.entries(data.schedule) // Convert object to an array
+          const formattedEvents = Object.entries(data.schedule)
             .flatMap(([day, slots]) => {
-              if (!slots || slots.length === 0) return []; // Skip null or empty slots
-  
+              if (!slots || slots.length === 0) return [];
+
               const dayDate = getDateForDay(day, baseDate);
               return slots.map((slot) => {
                 const [startStr, endStr] = slot.split(" - ");
@@ -337,28 +339,24 @@ const MyCalendar = () => {
                 };
               });
             });
-  
+
           setFetchedWorkingEvents(formattedEvents);
         }
       } catch (err) {
         console.error("Error fetching working events:", err);
       }
     };
-  
+
     fetchWorkingEvents();
   }, []);
-  
 
-  
   // Combine missing and working events for display on the calendar.
-  const events = [...missingEvents, ...workingEvents,...fetchedWorkingEvents];
+  const events = [...missingEvents, ...workingEvents, ...fetchedWorkingEvents];
 
   return (
     <div>
       <h1>Schedule for {staff?.name || "Staff Member"}</h1>
-
-      {/* Display list of working events */}
-      
+      <ToastContainer />
 
       {/* Inline CSS to override default react-big-calendar styles */}
       <style>{`

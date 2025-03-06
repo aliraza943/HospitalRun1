@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { FaEdit, FaTrash, FaCalendarAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Define the permission options for frontdesk users.
 const permissionOptions = [
@@ -107,10 +109,10 @@ const ViewStaffComp = () => {
         },
       });
       setStaffList(staffList.filter((staff) => staff._id !== id));
-      alert("Staff deleted successfully!");
+      toast.success("Staff deleted successfully!");
     } catch (error) {
       console.error("Error deleting staff:", error);
-      alert("Failed to delete staff.");
+      toast.error("Failed to delete staff.");
     }
   };
 
@@ -179,10 +181,10 @@ const ViewStaffComp = () => {
       setStaffList(staffList.map((s) => (s._id === editingStaff ? payload : s)));
       setEditingStaff(null);
       setIsModalOpen(false);
-      alert("Staff updated successfully!");
+      toast.success("Staff updated successfully!");
     } catch (error) {
       console.error("Error updating staff:", error);
-      alert("Failed to update staff.");
+      toast.error("Failed to update staff.");
     }
   };
 
@@ -211,6 +213,7 @@ const ViewStaffComp = () => {
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+      <ToastContainer />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold">Staff List</h2>
         <button

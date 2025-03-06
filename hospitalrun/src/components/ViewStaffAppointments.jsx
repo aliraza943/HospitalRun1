@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import ViewStaffCompAdmin from "./StaffAppointmentAdmin"; // Import the component
 
 const ViewStaffComp = () => {
@@ -20,7 +22,7 @@ const ViewStaffComp = () => {
         })
             .then(async (res) => {
                 if (res.status === 401) {
-                    alert("Your token expired. Kindly log back in.");
+                    toast.error("Your token expired. Kindly log back in.");
                     localStorage.removeItem("token"); // Clear expired token
                     navigate("/login"); // Redirect to login page
                     return null;
@@ -70,6 +72,7 @@ const ViewStaffComp = () => {
 
     return (
         <div className="max-w-6xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg min-h-screen max-h-screen overflow-y-auto flex flex-col">
+            <ToastContainer />
             <h2 className="text-2xl font-semibold mb-4">Select Staff Member</h2>
 
             {/* Search Bar with Attached Dropdown */}

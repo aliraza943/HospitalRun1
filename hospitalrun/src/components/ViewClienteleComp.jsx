@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ViewServicesComp = () => {
     const navigate = useNavigate();
@@ -41,7 +43,6 @@ const ViewServicesComp = () => {
         fetchClients();
     }, []);
     
-
     const handleSearch = (e) => {
         setSearchQuery(e.target.value.toLowerCase());
     };
@@ -58,7 +59,7 @@ const ViewServicesComp = () => {
 
             setClients(clients.filter(client => client._id !== id));
         } catch (err) {
-            alert("Error deleting client: " + err.message);
+            toast.error("Error deleting client: " + err.message);
         }
     };
 
@@ -84,7 +85,7 @@ const ViewServicesComp = () => {
             setEditingClient(null);
             setIsModalOpen(false);
         } catch (err) {
-            alert("Error updating client: " + err.message);
+            toast.error("Error updating client: " + err.message);
         }
     };
 
@@ -93,6 +94,7 @@ const ViewServicesComp = () => {
 
     return (
         <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+            <ToastContainer />
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-semibold">Clientele List</h2>
                 <button 

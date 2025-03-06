@@ -6,6 +6,8 @@ import { useState, useMemo, useEffect } from "react";
 import EventEditDetails from "./EventEditDetails";
 import { useNavigate } from "react-router-dom";
 import NewAppointmentModal from "./NewAppointmentModal";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const localizer = momentLocalizer(moment);
 
@@ -59,7 +61,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
     const dayOfWeek = selectedStartUTC.format("dddd");
     const workingSlots = staff.workingHours[dayOfWeek];
     if (!workingSlots || workingSlots.length === 0) {
-      alert("No working hours for this day.");
+      toast.error("No working hours for this day.");
       return;
     }
 
@@ -78,7 +80,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
     });
 
     if (!isWithinWorkingHours) {
-      alert("Selected slot is outside working hours.");
+      toast.error("Selected slot is outside working hours.");
       return;
     }
 
@@ -94,7 +96,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
     });
 
     if (isSlotOccupied) {
-      alert("This time slot is already occupied. Please select a different time.");
+      toast.error("This time slot is already occupied. Please select a different time.");
       return;
     }
 
@@ -104,7 +106,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
 
   const handleSubmitEvent = async () => {
     if (!newEvent.title || !newEvent.clientName || !newEvent.serviceType || !newEvent.charges) {
-      alert("Please fill all fields.");
+      toast.error("Please fill all fields.");
       return;
     }
 
@@ -124,7 +126,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
     });
 
     if (isSlotOccupied) {
-      alert("This time slot is already occupied. Please select a different time.");
+      toast.error("This time slot is already occupied. Please select a different time.");
       return;
     }
 
@@ -136,7 +138,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
       charges: newEvent.charges,
       start: formattedStartUTC.toDate(), // Convert back to Date for server
       end: formattedEndUTC.toDate(),
-      clientId:newEvent.clientId
+      clientId: newEvent.clientId,
     };
 
     try {
@@ -441,22 +443,22 @@ const ViewStaffCompAdmin = ({ staff }) => {
           start: startUTC,
           end: endUTC,
           staffId: selectedEvent.staffId,
-          clientId:selectedEvent.clientId
+          clientId: selectedEvent.clientId
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert("Appointment updated successfully!");
+        toast.success("Appointment updated successfully!");
         fetchAppointments();
         setShowEventDetailsModal(false);
       } else {
-        alert(`Error: ${data.message}`);
+        toast.error(`Error: ${data.message}`);
       }
     } catch (error) {
       console.error("Update Error:", error);
-      alert("Failed to update the appointment.");
+      toast.error("Failed to update the appointment.");
     }
   };
 
@@ -476,16 +478,16 @@ const ViewStaffCompAdmin = ({ staff }) => {
 
           {/* Date Input to jump to a specific date */}
           <div className="mb-4 flex justify-center items-center">
-    <label htmlFor="jumpDate" className="mr-2 font-semibold">
-        Jump to Date:
-    </label>
-    <input
-        type="date"
-        id="jumpDate"
-        onChange={handleDateInputChange}
-        className="border p-2 rounded"
-    />
-</div>
+            <label htmlFor="jumpDate" className="mr-2 font-semibold">
+              Jump to Date:
+            </label>
+            <input
+              type="date"
+              id="jumpDate"
+              onChange={handleDateInputChange}
+              className="border p-2 rounded"
+            />
+          </div>
 
           {/* CSS to hide entire day columns with no working hours */}
           <style>
@@ -521,7 +523,8 @@ const ViewStaffCompAdmin = ({ staff }) => {
         </div>
       )}
 
-      {showModal && (<NewAppointmentModal
+      {showModal && (
+        <NewAppointmentModal
           newEvent={newEvent}
           setNewEvent={setNewEvent}
           handleSubmitEvent={handleSubmitEvent}
@@ -543,6 +546,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
           staff={staff}
         />
       )}
+      <ToastContainer />
     </>
   );
 };

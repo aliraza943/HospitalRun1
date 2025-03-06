@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const EventDetailsModal = ({
   showEventDetailsModal,
@@ -118,7 +120,7 @@ const EventDetailsModal = ({
     const workingTime = getWorkingHoursForDay(dayOfWeek);
     if (!workingTime) {
       setIsWorkingDay(false);
-      alert("This date is not a working day. Please select another date.");
+      toast.error("This date is not a working day. Please select another date.");
       return;
     }
     setIsWorkingDay(true);
@@ -151,11 +153,11 @@ const EventDetailsModal = ({
   // Save the event details after validation
   const handleSave = () => {
     if (!selectedEvent.clientName || !selectedEvent.clientId || !selectedEvent.serviceType) {
-      alert("Please fill the form");
+      toast.error("Please fill the form");
       return;
     }
     if (!isWorkingDay) {
-      alert("You cannot save an event on a non-working day.");
+      toast.error("You cannot save an event on a non-working day.");
       return;
     }
     handleUpdateEvent();
@@ -174,6 +176,7 @@ const EventDetailsModal = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+      <ToastContainer />
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
         <h2 className="text-xl font-bold mb-4">Edit Event Details</h2>
 
