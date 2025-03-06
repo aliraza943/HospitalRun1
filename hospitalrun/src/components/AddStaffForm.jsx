@@ -196,19 +196,7 @@ const AddStaffForm = () => {
         )}
 
         {/* Working Hours - Only for non-providers (optional) */}
-        {staff.role !== "provider" && (
-          <div>
-            <label className="block text-gray-700">Working Hours</label>
-            <input
-              type="text"
-              name="workingHours"
-              value={staff.workingHours}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              placeholder="e.g., 9 AM - 6 PM"
-            />
-          </div>
-        )}
+      
 
         {/* Permissions - Only for Front Desk */}
         {staff.role === "frontdesk" && (
