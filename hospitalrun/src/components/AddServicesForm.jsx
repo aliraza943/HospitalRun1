@@ -8,6 +8,7 @@ const AddServiceForm = () => {
         name: "",
         duration: "",
         price: "",
+        description: "", // New description field
         category: "Haircut",
     });
 
@@ -19,7 +20,7 @@ const AddServiceForm = () => {
         const { name, value } = e.target;
         setService((prev) => ({ ...prev, [name]: value }));
     };
-    console.log("data")
+
     // Submit form data to backend
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -39,7 +40,7 @@ const AddServiceForm = () => {
             );
     
             setMessage(response.data.message);
-            setService({ name: "", duration: "", price: "", category: "Haircut" });
+            setService({ name: "", duration: "", price: "", description: "", category: "Haircut" });
     
             setTimeout(() => navigate("/viewServices"), 1000);
         } catch (error) {
@@ -49,7 +50,6 @@ const AddServiceForm = () => {
         }
     };
     
-
     return (
         <div className="max-w-lg mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Add Service</h2>
@@ -98,6 +98,19 @@ const AddServiceForm = () => {
                         className="w-full p-2 border rounded"
                         required
                     />
+                </div>
+
+                {/* Description */}
+                <div>
+                    <label className="block text-gray-700">Description</label>
+                    <textarea
+                        name="description"
+                        value={service.description}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                        rows="3"
+                        required
+                    ></textarea>
                 </div>
 
                 {/* Category */}

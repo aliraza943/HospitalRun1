@@ -8,10 +8,10 @@ const AddStaffForm = () => {
     name: "",
     email: "",
     phone: "",
-    role: "barber",
-    workingHours: "", // This can be removed or left for non-barbers
+    role: "provider",
+    workingHours: "", // This can be removed or left for non-providers
     permissions: [],
-    services: [], // For barbers, we'll push selected service IDs here
+    services: [], // For providers, we'll push selected service IDs here
   });
 
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ const AddStaffForm = () => {
     }));
   };
 
-  // Handle service checkbox changes for barbers
+  // Handle service checkbox changes for providers
   const handleServiceCheckboxChange = (e) => {
     const { value, checked } = e.target;
     setStaff((prev) => ({
@@ -68,7 +68,7 @@ const AddStaffForm = () => {
         name: "",
         email: "",
         phone: "",
-        role: "barber",
+        role: "provider",
         workingHours: "",
         permissions: [],
         services: [],
@@ -81,9 +81,9 @@ const AddStaffForm = () => {
     }
   };
 
-  // For barbers, fetch services from API
+  // For providers, fetch services from API
   useEffect(() => {
-    if (staff.role === "barber") {
+    if (staff.role === "provider") {
       const fetchServices = async () => {
         try {
           const response = await fetch(
@@ -169,13 +169,13 @@ const AddStaffForm = () => {
             onChange={handleChange}
             className="w-full p-2 border rounded"
           >
-            <option value="barber">Barber/Provider</option>
+            <option value="provider">provider/Provider</option>
             <option value="frontdesk">Front Desk</option>
           </select>
         </div>
 
-        {/* For Barber Role: Show service checkboxes */}
-        {staff.role === "barber" && (
+        {/* For provider Role: Show service checkboxes */}
+        {staff.role === "provider" && (
           <div>
             <label className="block text-gray-700">Select Services</label>
             <div className="flex flex-col gap-2">
@@ -195,8 +195,8 @@ const AddStaffForm = () => {
           </div>
         )}
 
-        {/* Working Hours - Only for non-barbers (optional) */}
-        {staff.role !== "barber" && (
+        {/* Working Hours - Only for non-providers (optional) */}
+        {staff.role !== "provider" && (
           <div>
             <label className="block text-gray-700">Working Hours</label>
             <input

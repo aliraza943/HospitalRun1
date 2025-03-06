@@ -60,14 +60,14 @@ const StaffClienteleView = () => {
   if (loading) return <p className="text-center mt-4">Loading...</p>;
   if (error) return <p className="text-center mt-4 text-red-500">Error: {error}</p>;
 
-  // Filter to only show staff with role "barber"
-  const barberStaff = staffList.filter((staff) => staff.role === "barber");
+  // Filter to only show staff with role "provider"
+  const providerStaff = staffList.filter((staff) => staff.role === "provider");
 
   return (
     <div className="max-w-7xl mx-auto mt-10 p-6">
-      <h2 className="text-3xl font-bold text-center mb-8">Barbers and Their Clientele</h2>
-      {barberStaff.map((staff) => {
-        // Filter clients whose providerId matches this barber's _id
+      <h2 className="text-3xl font-bold text-center mb-8">providers and Their Clientele</h2>
+      {providerStaff.map((staff) => {
+        // Filter clients whose providerId matches this provider's _id
         const staffClients = clients.filter(client => client.providerId === staff._id);
         return (
           <div key={staff._id} className="mb-10 border border-gray-200 rounded-lg shadow-lg p-6 bg-white">
@@ -111,7 +111,7 @@ const StaffClienteleView = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 italic">No clientele for this barber.</p>
+              <p className="text-gray-500 italic">No clientele for this provider.</p>
             )}
           </div>
         );

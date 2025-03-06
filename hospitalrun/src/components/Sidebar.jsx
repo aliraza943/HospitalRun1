@@ -22,20 +22,20 @@ const SidebarComp = () => {
       const updatedUser = { ...user, workingHours };
       console.log("THIS IS THE UPDATED USER", updatedUser);
   
-      // Navigate for barbers
-      if (updatedUser.role === "barber") {
+      // Navigate for providers
+      if (updatedUser.role === "provider") {
         navigate("/viewStaffAppointments", { state: { staff: updatedUser } });
       }
     } catch (error) {
       console.error("Error fetching working hours:", error);
-      if (user?.role === "barber") {
+      if (user?.role === "provider") {
         navigate("/viewStaffAppointments", { state: { staff: user } });
       }
     }
   };
 
   const handleAvailabilityNavigation = () => {
-    if (user?.role === "barber") {
+    if (user?.role === "provider") {
       navigate("/view-schedules", { state: { staff: user } });
     } else {
       navigate("/viewStaff");
@@ -50,7 +50,7 @@ const SidebarComp = () => {
   };
 
   // Role Checks
-  const isBarber = user?.role === "barber";
+  const isprovider = user?.role === "provider";
   const isFrontDesk = user?.role === "frontdesk";
   const isAdmin = user?.role === "admin";
 
@@ -66,8 +66,8 @@ const SidebarComp = () => {
             <Link to="/">Home</Link>
           </MenuItem>
 
-          {/* Show Schedule submenu only for barbers */}
-          {isBarber && (
+          {/* Show Schedule submenu only for providers */}
+          {isprovider && (
             <SubMenu label="Schedule">
               <MenuItem onClick={handleScheduleNavigation}>
                 View My Schedule
@@ -79,9 +79,9 @@ const SidebarComp = () => {
           )}
 
           {/* Show Clientele submenu */}
-          {(isBarber || hasManageClientele) && (
+          {(isprovider || hasManageClientele) && (
             <SubMenu label="Clientele">
-              {isBarber ? (
+              {isprovider ? (
                 <MenuItem>
                   <Link to="/providerViewClientele">View Clientele</Link>
                 </MenuItem>
@@ -93,8 +93,8 @@ const SidebarComp = () => {
             </SubMenu>
           )}
 
-          {/* Front Desk submenu for non-barber frontdesk users */}
-          {isFrontDesk && !isBarber && (
+          {/* Front Desk submenu for non-provider frontdesk users */}
+          {isFrontDesk && !isprovider && (
             <SubMenu label="Front Desk">
               <MenuItem>
                 <Link to="/viewStaffCalendar">View Schedules</Link>

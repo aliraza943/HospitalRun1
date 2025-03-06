@@ -25,7 +25,7 @@ const ViewStaffComp = () => {
     workingHours: "",
     // For frontdesk users, permissions will be stored as an object.
     permissions: {},
-    // For barber/provider, services is an array of selected service IDs.
+    // For provider/provider, services is an array of selected service IDs.
     services: [],
   });
   const [services, setServices] = useState([]);
@@ -65,7 +65,7 @@ const ViewStaffComp = () => {
       .catch((err) => console.error("Error fetching staff:", err));
   }, [navigate]);
 
-  // Fetch services list from API (for barber role)
+  // Fetch services list from API (for provider role)
   useEffect(() => {
     fetch("http://localhost:8080/api/services/serviceTypes/serviceDetails", {
       headers: {
@@ -116,7 +116,7 @@ const ViewStaffComp = () => {
 
   // Open modal for editing staff.
   // For frontdesk users, convert permissions array to an object.
-  // For barbers, ensure services are set as an array.
+  // For providers, ensure services are set as an array.
   const handleEdit = (staff) => {
     setEditingStaff(staff._id);
     const updatedStaffData = { ...staff };
@@ -129,7 +129,7 @@ const ViewStaffComp = () => {
       updatedStaffData.permissions = permissionsObj;
     }
     
-    if (staff.role === "barber") {
+    if (staff.role === "provider") {
       // Ensure services are stored as an array.
       updatedStaffData.services = Array.isArray(staff.services)
         ? staff.services
@@ -306,12 +306,12 @@ const ViewStaffComp = () => {
                 }
                 className="w-full p-2 border rounded"
               >
-                <option value="barber">Barber/Provider</option>
+                <option value="provider">provider/Provider</option>
                 <option value="frontdesk">Front Desk</option>
               </select>
 
-              {/* Checkboxes for Service Selection for Barber Role */}
-              {updatedStaff.role === "barber" && (
+              {/* Checkboxes for Service Selection for provider Role */}
+              {updatedStaff.role === "provider" && (
                 <div className="mt-4">
                   <label className="block mb-1 font-medium">Services</label>
                   {services.map((service) => (
