@@ -27,7 +27,7 @@ const ViewStaffComp = () => {
                     navigate("/login"); // Redirect to login page
                     return null;
                 }
-                
+
                 if (res.status === 403) {
                     navigate("/unauthorized", {
                         state: { message: "You are not authorized to manage appointments" },
@@ -71,9 +71,9 @@ const ViewStaffComp = () => {
     }, []);
 
     return (
-        <div className="max-w-6xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg min-h-screen max-h-screen overflow-y-auto flex flex-col">
+        <div className="max-w-6xl mx-auto mt-10 p-6 bg-white  rounded-lg min-h-screen max-h-screen overflow-y-auto flex flex-col">
             <ToastContainer />
-            <h2 className="text-2xl font-semibold mb-4">Select Staff Member</h2>
+            <h2 className="text-2xl font-semibold mb-4">Providers List</h2>
 
             {/* Search Bar with Attached Dropdown */}
             <div className="relative w-full" ref={dropdownRef}>
@@ -87,7 +87,7 @@ const ViewStaffComp = () => {
                 />
 
                 {dropdownOpen && (
-                    <div className="absolute w-full bg-white border border-gray-300 rounded-b-md shadow-lg max-h-60 overflow-y-auto z-10">
+                    <div className="absolute w-full bg-white border border-gray-300 rounded-b-md  max-h-60 overflow-y-auto z-10">
                         {filteredStaffList.length > 0 ? (
                             filteredStaffList.map((staff) => (
                                 <div
@@ -111,7 +111,7 @@ const ViewStaffComp = () => {
 
             {/* Content Section */}
             {selectedStaff && (
-                <div className="mt-6 flex-grow">
+                <div className=" flex-grow">
                     <ViewStaffCompAdmin staff={selectedStaff} />
                 </div>
             )}

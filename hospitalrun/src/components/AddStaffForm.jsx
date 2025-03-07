@@ -112,9 +112,8 @@ const AddStaffForm = () => {
 
       {message && (
         <div
-          className={`p-3 mb-4 text-white rounded ${
-            message.includes("success") ? "bg-green-500" : "bg-red-500"
-          }`}
+          className={`p-3 mb-4 text-white rounded ${message.includes("success") ? "bg-green-500" : "bg-red-500"
+            }`}
         >
           {message}
         </div>
@@ -169,7 +168,7 @@ const AddStaffForm = () => {
             onChange={handleChange}
             className="w-full p-2 border rounded"
           >
-            <option value="provider">provider/Provider</option>
+            <option value="provider">Provider</option>
             <option value="frontdesk">Front Desk</option>
           </select>
         </div>
@@ -177,26 +176,27 @@ const AddStaffForm = () => {
         {/* For provider Role: Show service checkboxes */}
         {staff.role === "provider" && (
           <div>
-            <label className="block text-gray-700">Select Services</label>
-            <div className="flex flex-col gap-2">
+            <label className="block text-gray-700 font-semibold mb-2">Select Services</label>
+            <div className="flex flex-wrap gap-2">
               {fetchedServices.map((service) => (
-                <label key={service._id} className="flex items-center">
+                <label key={service._id} className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg shadow-sm">
                   <input
                     type="checkbox"
                     value={service._id}
                     checked={staff.services.includes(service._id)}
                     onChange={handleServiceCheckboxChange}
-                    className="mr-2"
+                    className="accent-blue-600"
                   />
-                  {service.name}
+                  <span className="text-gray-800">{service.name}</span>
                 </label>
               ))}
             </div>
           </div>
         )}
 
+
         {/* Working Hours - Only for non-providers (optional) */}
-      
+
 
         {/* Permissions - Only for Front Desk */}
         {staff.role === "frontdesk" && (

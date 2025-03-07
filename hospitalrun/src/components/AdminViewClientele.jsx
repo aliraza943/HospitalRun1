@@ -65,7 +65,7 @@ const StaffClienteleView = () => {
 
   return (
     <div className="max-w-7xl mx-auto mt-10 p-6">
-      <h2 className="text-3xl font-bold text-center mb-8">providers and Their Clientele</h2>
+      <h2 className="text-3xl font-bold text-center mb-8">Providers List and Their Clientele</h2>
       {providerStaff.map((staff) => {
         // Filter clients whose providerId matches this provider's _id
         const staffClients = clients.filter(client => client.providerId === staff._id);

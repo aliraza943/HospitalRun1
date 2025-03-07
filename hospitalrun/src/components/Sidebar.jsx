@@ -42,7 +42,7 @@ const SidebarComp = () => {
 
   const handleAvailabilityNavigation = () => {
     if (user?.role === "provider") {
-      navigate("/view-schedules", { state: { staff: user } });
+      // navigate("/view-schedules", { state: { staff: user } });
     } else {
       navigate("/viewStaff");
     }
@@ -69,9 +69,9 @@ const SidebarComp = () => {
             <Link to="/">Home</Link>
           </MenuItem>
           {isprovider && (
-            <SubMenu 
-              label="Schedule" 
-              open={activeSubmenu === 'Schedule'} 
+            <SubMenu
+              label="Schedule"
+              open={activeSubmenu === 'Schedule'}
               onOpenChange={() => toggleSubMenu('Schedule')}
             >
               <MenuItem onClick={handleScheduleNavigation}>View My Schedule</MenuItem>
@@ -79,9 +79,9 @@ const SidebarComp = () => {
             </SubMenu>
           )}
           {(isprovider || hasManageClientele) && (
-            <SubMenu 
-              label="Clientele" 
-              open={activeSubmenu === 'Clientele'} 
+            <SubMenu
+              label="Clientele"
+              open={activeSubmenu === 'Clientele'}
               onOpenChange={() => toggleSubMenu('Clientele')}
             >
               {isprovider ? (
@@ -92,9 +92,9 @@ const SidebarComp = () => {
             </SubMenu>
           )}
           {isFrontDesk && !isprovider && (
-            <SubMenu 
-              label="Front Desk" 
-              open={activeSubmenu === 'Front Desk'} 
+            <SubMenu
+              label="Front Desk"
+              open={activeSubmenu === 'Front Desk'}
               onOpenChange={() => toggleSubMenu('Front Desk')}
             >
               <MenuItem><Link to="/viewStaffCalendar">View Schedules</Link></MenuItem>
@@ -106,22 +106,22 @@ const SidebarComp = () => {
             user?.permissions?.includes("manage_services") ||
             user?.permissions?.includes("manage_businessHours")
           ))) && (
-            <SubMenu 
-              label="Admin" 
-              open={activeSubmenu === 'Admin'} 
-              onOpenChange={() => toggleSubMenu('Admin')}
-            >
-              {(isAdmin || user?.permissions?.includes("manage_services")) && (
-                <MenuItem><Link to="/viewServices">View Services</Link></MenuItem>
-              )}
-              {(isAdmin || user?.permissions?.includes("manage_businessHours")) && (
-                <MenuItem><Link to="/adminCalendar">View Calendar</Link></MenuItem>
-              )}
-              {(isAdmin || user?.permissions?.includes("manage_staff")) && (
-                <MenuItem><Link to="/viewStaff">View Staff</Link></MenuItem>
-              )}
-            </SubMenu>
-          )}
+              <SubMenu
+                label="Admin"
+                open={activeSubmenu === 'Admin'}
+                onOpenChange={() => toggleSubMenu('Admin')}
+              >
+                {(isAdmin || user?.permissions?.includes("manage_services")) && (
+                  <MenuItem><Link to="/viewServices">View Services</Link></MenuItem>
+                )}
+                {(isAdmin || user?.permissions?.includes("manage_businessHours")) && (
+                  <MenuItem><Link to="/adminCalendar">View Calendar</Link></MenuItem>
+                )}
+                {(isAdmin || user?.permissions?.includes("manage_staff")) && (
+                  <MenuItem><Link to="/viewStaff">View Staff</Link></MenuItem>
+                )}
+              </SubMenu>
+            )}
           <MenuItem onClick={handleLogout}>Logout</MenuItem>
         </Menu>
       </Sidebar>

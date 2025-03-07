@@ -26,7 +26,7 @@ const AddServiceForm = () => {
         e.preventDefault();
         setLoading(true);
         setMessage("");
-    
+
         try {
             const response = await axios.post(
                 "http://localhost:8080/api/services/add",
@@ -38,10 +38,10 @@ const AddServiceForm = () => {
                     },
                 }
             );
-    
+
             setMessage(response.data.message);
             setService({ name: "", duration: "", price: "", description: "", category: "Haircut" });
-    
+
             setTimeout(() => navigate("/viewServices"), 1000);
         } catch (error) {
             setMessage(error.response?.data?.message || "Failed to add service!");
@@ -49,7 +49,7 @@ const AddServiceForm = () => {
             setLoading(false);
         }
     };
-    
+
     return (
         <div className="max-w-lg mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
             <h2 className="text-2xl font-semibold mb-4">Add Service</h2>
@@ -126,8 +126,20 @@ const AddServiceForm = () => {
                         <option value="Shaving">Shaving</option>
                         <option value="Facial">Facial</option>
                         <option value="Massage">Massage</option>
+                        <option value="Beard Trim">Beard Trim</option>
+                        <option value="Hair Coloring">Hair Coloring</option>
+                        <option value="Scalp Treatment">Scalp Treatment</option>
+                        <option value="Hair Spa">Hair Spa</option>
+                        <option value="Waxing">Waxing</option>
+                        <option value="Threading">Threading</option>
+                        <option value="Manicure">Manicure</option>
+                        <option value="Pedicure">Pedicure</option>
+                        <option value="Head Massage">Head Massage</option>
+                        <option value="Body Scrub">Body Scrub</option>
+                        <option value="Hot Towel Shave">Hot Towel Shave</option>
                     </select>
                 </div>
+
 
                 {/* Submit Button */}
                 <button

@@ -471,7 +471,7 @@ const ViewStaffComp = () => {
         </div>
       ) : (
         <div className="w-full mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-          <h2 className="text-2xl font-semibold mb-4">Staff Appointments</h2>
+          <h2 className="text-2xl font-semibold mb-4">My Appointments</h2>
           <p className="mb-4">
             <strong>Working Hours:</strong> {workingRangeDisplay}
           </p>
