@@ -89,6 +89,7 @@ const NewAppointmentModal = ({
         ...newEvent,
         serviceType: selectedService.name, // set the service name
         charges: selectedService.price, // update charges based on price
+        serviceId: selectedService._id, // send the service ID as well
       });
       console.log(
         "Service Type selected:",
@@ -101,6 +102,7 @@ const NewAppointmentModal = ({
         ...newEvent,
         serviceType: "",
         charges: "",
+        serviceId: "",
       });
     }
   };
@@ -153,10 +155,7 @@ const NewAppointmentModal = ({
         <label className="block text-sm font-medium mb-1">Service Type</label>
         <select
           className="w-full p-2 border rounded mb-2"
-          value={
-            serviceTypes.find((service) => service.name === newEvent.serviceType)
-              ?._id || ""
-          }
+          value={newEvent.serviceId || ""}
           onChange={handleServiceTypeChange}
           disabled={filteredServiceTypes.length === 0} // Disable if no services exist
         >
@@ -188,6 +187,14 @@ const NewAppointmentModal = ({
             onClick={() => {
               if (filteredServiceTypes.length === 0) {
                 toast.error("The services for this user have not been set.");
+                return;
+              }
+              // Check if the appointment start and end times are in the past
+              const now = new Date();
+              const startTime = new Date(newEvent.start);
+              const endTime = new Date(newEvent.end);
+              if (startTime < now || endTime < now) {
+                toast.error("Cannot save an appointment in the past.");
                 return;
               }
               handleSubmitEvent();

@@ -147,6 +147,7 @@ const ViewStaffComp = () => {
       start: formattedStartUTC.toDate(),
       end: formattedEndUTC.toDate(),
       clientId: newEvent.clientId,
+      serviceId:newEvent.serviceId
     };
 
     try {

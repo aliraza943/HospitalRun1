@@ -13,6 +13,15 @@ const EventDetailsModal = ({
   staffservices,
   staff, // Array of service IDs that belong to the staff member
 }) => {
+  console.log( showEventDetailsModal,
+    selectedEvent,
+    setSelectedEvent,
+    setShowEventDetailsModal,
+    handleUpdateEvent,
+    handleDeleteEvent,
+    workingHours,
+    staffservices,
+    staff)
   // State for time range and working day check
   const [timeRange, setTimeRange] = useState([{ min: "09:00", max: "18:00" }]);
   const [isWorkingDay, setIsWorkingDay] = useState(true);
@@ -184,10 +193,7 @@ const EventDetailsModal = ({
         <label className="block text-gray-700 font-semibold">Client:</label>
         <select
           className="w-full p-2 border rounded mb-2"
-          value={
-            clients.find((client) => client.username === selectedEvent.clientName)
-              ?._id || ""
-          }
+          value={clients.find((client) => client.username === selectedEvent.clientName)?._id || ""}
           onChange={(e) => {
             const selectedId = e.target.value;
             const selectedClient = clients.find((client) => client._id === selectedId);
@@ -223,12 +229,14 @@ const EventDetailsModal = ({
                 ...selectedEvent,
                 serviceType: selectedService.name,
                 serviceCharges: selectedService.price,
+                serviceId: selectedService._id, // Added serviceId here
               });
             } else {
               setSelectedEvent({
                 ...selectedEvent,
                 serviceType: "",
                 serviceCharges: "",
+                serviceId: "",
               });
             }
           }}

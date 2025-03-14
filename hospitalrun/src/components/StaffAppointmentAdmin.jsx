@@ -139,6 +139,7 @@ const ViewStaffCompAdmin = ({ staff }) => {
       start: formattedStartUTC.toDate(), // Convert back to Date for server
       end: formattedEndUTC.toDate(),
       clientId: newEvent.clientId,
+      serviceId:newEvent.serviceId
     };
 
     try {

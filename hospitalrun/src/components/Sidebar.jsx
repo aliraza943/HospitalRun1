@@ -7,6 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 const SidebarComp = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
+  console.log(user,"LOL")
   const [activeSubmenu, setActiveSubmenu] = useState(localStorage.getItem("activeSubmenu") || null);
 
   useEffect(() => {
@@ -98,7 +99,7 @@ const SidebarComp = () => {
               onOpenChange={() => toggleSubMenu('Front Desk')}
             >
               <MenuItem><Link to="/viewStaffCalendar">View Schedules</Link></MenuItem>
-              <MenuItem>Cashier</MenuItem>
+              <MenuItem><Link to="/frontDeskCheckout">Checkout</Link></MenuItem>
             </SubMenu>
           )}
           {(isAdmin || (isFrontDesk && (

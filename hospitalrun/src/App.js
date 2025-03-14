@@ -18,6 +18,7 @@ import Unauthorized from './pages/Unauthorized/unauthorizedPage';
 import ViewClientele from './pages/Clientele/ViewClientele'
 import AddClienteleForm from './pages/Clientele/AddClientele';
 import AdminViewClientele from "./pages/Clientele/ViewAdminClientele"
+import ViewCashier from './pages/staff/Cashier';
 const App = () => {
   return (
     <Router>
@@ -37,6 +38,9 @@ const App = () => {
         <Route path="/providerViewClientele" element={<ViewClientele />} />
         <Route path="/addClienteleForm" element={<AddClienteleForm />} />
         <Route path="/adminViewClientele" element={<AdminViewClientele />} />
+        <Route path="/frontDeskCheckout" element={<ViewCashier />} />
+        
+
       </Routes>
 
     </Router>
