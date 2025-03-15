@@ -113,7 +113,7 @@ const CheckOutView = () => {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       const now = new Date();
-      const updatedAppointments = data.data.map((appointment) => {
+      let updatedAppointments = data.data.map((appointment) => {
         const startTime = new Date(appointment.start);
         const endTime = new Date(appointment.end);
         let status = appointment.status.toLowerCase();
@@ -122,6 +122,8 @@ const CheckOutView = () => {
         }
         return { ...appointment, status };
       });
+      // Sort appointments so that the ones ending first are shown first
+      updatedAppointments.sort((a, b) => new Date(a.end) - new Date(b.end));
       setAppointments(updatedAppointments);
       setFilteredAppointments(updatedAppointments);
       setPage(data.page);
@@ -134,9 +136,18 @@ const CheckOutView = () => {
     }
   };
 
-  // Refetch appointments when page, limit, dateFilter, or selectedStaff change
+  // Initial fetch and refetch when dependencies change
   useEffect(() => {
     fetchAppointments(page, limit);
+  }, [page, limit, dateFilter, selectedStaff]);
+
+  // Setup interval to fetch appointments every 10 minutes
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchAppointments(page, limit);
+    }, 600000); // 600,000ms = 10 minutes
+
+    return () => clearInterval(intervalId);
   }, [page, limit, dateFilter, selectedStaff]);
 
   // Filter appointments by status if needed
@@ -395,6 +406,7 @@ const CheckOutView = () => {
       <ReceiptModal
         appointment={selectedAppointment}
         onClose={() => setSelectedAppointment(null)}
+        onCompleted={() => fetchAppointments(page, limit)}
       />
       {showEventDetailsModal && selectedEvent && (
         <EditAppointmentModal

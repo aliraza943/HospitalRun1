@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const ReceiptModal = ({ appointment, onClose }) => {
+const ReceiptModal = ({ appointment, onClose, onCompleted }) => {
   const [loading, setLoading] = useState(false);
 
   if (!appointment) return null;
@@ -27,6 +27,10 @@ const ReceiptModal = ({ appointment, onClose }) => {
       }
 
       alert("Appointment marked as completed successfully!");
+      // Call the callback to refresh appointments in the parent component
+      if (onCompleted) {
+        onCompleted();
+      }
       onClose(); // Close the modal after success
     } catch (error) {
       console.error("Error:", error);
