@@ -112,12 +112,15 @@ const ViewServicesComp = () => {
 
   const handleEdit = (service) => {
     setEditingService(service._id);
-    // Ensure taxes is an array (or default to an empty array if not defined).
-    setUpdatedService({ ...service, taxes: service.taxes || [] });
+    // Ensure taxes is an array and always include GST.
+    const serviceTaxes = Array.isArray(service.taxes) ? service.taxes : [];
+    const newTaxes = serviceTaxes.includes("GST") ? serviceTaxes : [...serviceTaxes, "GST"];
+    setUpdatedService({ ...service, taxes: newTaxes });
     setIsModalOpen(true);
   };
 
   const handleTaxCheckboxChange = (e, taxId) => {
+    // This handler is only for editable tax options (non-GST)
     if (e.target.checked) {
       setUpdatedService((prevState) => ({
         ...prevState,
@@ -210,7 +213,9 @@ const ViewServicesComp = () => {
               <td className="border p-2">{service.duration} min</td>
               <td className="border p-2">{service.description}</td>
               <td className="border p-2">
-                {Array.isArray(service.taxes) ? service.taxes.join(", ") : service.taxes}
+                {Array.isArray(service.taxes)
+                  ? service.taxes.join(", ")
+                  : service.taxes}
               </td>
               <td className="border p-2 space-x-2">
                 <button onClick={() => handleEdit(service)} className="text-blue-500 text-lg">
@@ -278,8 +283,17 @@ const ViewServicesComp = () => {
                     <input
                       type="checkbox"
                       id={tax.id}
-                      checked={updatedService.taxes.includes(tax.id)}
-                      onChange={(e) => handleTaxCheckboxChange(e, tax.id)}
+                      checked={
+                        tax.id === "GST"
+                          ? true
+                          : updatedService.taxes.includes(tax.id)
+                      }
+                      onChange={
+                        tax.id === "GST"
+                          ? null
+                          : (e) => handleTaxCheckboxChange(e, tax.id)
+                      }
+                      disabled={tax.id === "GST"}
                     />
                     <label htmlFor={tax.id} className="ml-2">
                       {tax.name}
