@@ -13,7 +13,7 @@ const EventDetailsModal = ({
   staffservices,
   staff, // Array of service IDs that belong to the staff member
 }) => {
-  console.log( showEventDetailsModal,
+  console.log(showEventDetailsModal,
     selectedEvent,
     setSelectedEvent,
     setShowEventDetailsModal,
@@ -301,25 +301,29 @@ const EventDetailsModal = ({
 
         <div className="flex justify-between mt-4">
           <button
-            className="bg-gray-500 text-white px-4 py-2 rounded"
+            className="bg-gray-500 text-white px-2 py-1 rounded text-sm"
             onClick={() => setShowEventDetailsModal(false)}
           >
-            Cancel
+            Close
           </button>
+
           <button
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-red-600 text-white px-3 py-1 rounded text-sm"
+            onClick={handleDeleteEvent}
+          >
+            Cancel Appointment
+          </button>
+
+          <button
+            className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
             onClick={handleSave}
             disabled={!isWorkingDay}
           >
             Save
           </button>
-          <button
-            className="bg-red-600 text-white px-4 py-2 rounded"
-            onClick={handleDeleteEvent}
-          >
-            Delete
-          </button>
         </div>
+
+
       </div>
     </div>
   );
