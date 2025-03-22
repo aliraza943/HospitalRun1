@@ -10,14 +10,13 @@ const AddServiceForm = () => {
     price: "",
     description: "",
     category: "Haircut",
-    taxes: ["GST"], // GST is always included
+    taxes: [],
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [availableTaxes, setAvailableTaxes] = useState([]);
 
-  // Fetch applicable taxes from API
   useEffect(() => {
     const fetchTaxes = async () => {
       try {
@@ -29,7 +28,7 @@ const AddServiceForm = () => {
 
         const { taxes } = response.data;
         if (taxes) {
-          setAvailableTaxes(Object.keys(taxes)); // Store tax keys (e.g., ["HST", "PST"])
+          setAvailableTaxes(Object.keys(taxes));
         }
       } catch (error) {
         console.error("Failed to fetch taxes:", error);
@@ -40,13 +39,11 @@ const AddServiceForm = () => {
     fetchTaxes();
   }, []);
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setService((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle checkbox changes
   const handleCheckboxChange = (e) => {
     const { value, checked } = e.target;
     setService((prev) => ({
@@ -55,23 +52,18 @@ const AddServiceForm = () => {
     }));
   };
 
-  // Submit form data
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/services/add",
-        service,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await axios.post("http://localhost:8080/api/services/add", service, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
       setMessage(response.data.message);
       setService({
@@ -80,7 +72,7 @@ const AddServiceForm = () => {
         price: "",
         description: "",
         category: "Haircut",
-        taxes: ["GST"], // Reset, GST stays checked
+        taxes: [],
       });
 
       setTimeout(() => navigate("/viewServices"), 1000);
@@ -97,40 +89,33 @@ const AddServiceForm = () => {
 
       {message && (
         <div
-          className={`p-3 mb-4 text-white rounded ${
-            message.includes("success") ? "bg-green-500" : "bg-red-500"
-          }`}
+          className={`p-3 mb-4 text-white rounded ${message.includes("success") ? "bg-green-500" : "bg-red-500"}`}
         >
           {message}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Service Name */}
         <div>
           <label className="block text-gray-700">Service Name</label>
           <input type="text" name="name" value={service.name} onChange={handleChange} className="w-full p-2 border rounded" required />
         </div>
 
-        {/* Duration */}
         <div>
           <label className="block text-gray-700">Duration (in minutes)</label>
           <input type="number" name="duration" value={service.duration} onChange={handleChange} className="w-full p-2 border rounded" required />
         </div>
 
-        {/* Price */}
         <div>
           <label className="block text-gray-700">Price ($)</label>
           <input type="number" name="price" value={service.price} onChange={handleChange} className="w-full p-2 border rounded" required />
         </div>
 
-        {/* Description */}
         <div>
           <label className="block text-gray-700">Description</label>
           <textarea name="description" value={service.description} onChange={handleChange} className="w-full p-2 border rounded" rows="3" required></textarea>
         </div>
 
-        {/* Category */}
         <div>
           <label className="block text-gray-700">Category</label>
           <select name="category" value={service.category} onChange={handleChange} className="w-full p-2 border rounded">
@@ -152,36 +137,24 @@ const AddServiceForm = () => {
           </select>
         </div>
 
-        {/* Taxes */}
         <div>
           <label className="block text-gray-700">Taxes</label>
-
-          {/* GST - Always Checked and Disabled */}
-          <div className="flex items-center">
-            <input type="checkbox" id="tax-GST" name="taxes" value="GST" checked disabled className="mr-2" />
-            <label htmlFor="tax-GST" className="text-gray-700">GST (Mandatory)</label>
-          </div>
-
-          {/* Available Tax Options (Fetched Dynamically) */}
           {availableTaxes.map((tax) => (
-            tax !== "GST" && (
-              <div key={tax} className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={`tax-${tax}`}
-                  name="taxes"
-                  value={tax}
-                  checked={service.taxes.includes(tax)}
-                  onChange={handleCheckboxChange}
-                  className="mr-2"
-                />
-                <label htmlFor={`tax-${tax}`} className="text-gray-700">{tax}</label>
-              </div>
-            )
+            <div key={tax} className="flex items-center">
+              <input
+                type="checkbox"
+                id={`tax-${tax}`}
+                name="taxes"
+                value={tax}
+                checked={service.taxes.includes(tax)}
+                onChange={handleCheckboxChange}
+                className="mr-2"
+              />
+              <label htmlFor={`tax-${tax}`} className="text-gray-700">{tax}</label>
+            </div>
           ))}
         </div>
 
-        {/* Submit Button */}
         <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400" disabled={loading}>
           {loading ? "Adding..." : "Add Service"}
         </button>

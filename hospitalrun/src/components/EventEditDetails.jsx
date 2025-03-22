@@ -13,15 +13,6 @@ const EventDetailsModal = ({
   staffservices,
   staff, // Array of service IDs that belong to the staff member
 }) => {
-  console.log( showEventDetailsModal,
-    selectedEvent,
-    setSelectedEvent,
-    setShowEventDetailsModal,
-    handleUpdateEvent,
-    handleDeleteEvent,
-    workingHours,
-    staffservices,
-    staff)
   // State for time range and working day check
   const [timeRange, setTimeRange] = useState([{ min: "09:00", max: "18:00" }]);
   const [isWorkingDay, setIsWorkingDay] = useState(true);
@@ -48,6 +39,11 @@ const EventDetailsModal = ({
       const [start, end] = range.split(" - ");
       return { min: convertTo24Hour(start), max: convertTo24Hour(end) };
     });
+  };
+
+  // Calculate duration (in minutes) between two dates
+  const calculateDuration = (start, end) => {
+    return (new Date(end) - new Date(start)) / (1000 * 60);
   };
 
   // Initialize time range when modal opens or selectedEvent changes
@@ -159,6 +155,50 @@ const EventDetailsModal = ({
     });
   };
 
+  // Custom confirmation using a toast
+  const confirmAndSubmit = () => {
+    toast(
+      ({ closeToast }) => (
+        <div>
+          <p>This is not the expected duration for this event. Are you sure?</p>
+          <div className="flex justify-between mt-2">
+            <button
+              onClick={() => {
+                handleUpdateEvent();
+                closeToast();
+              }}
+              style={{
+                backgroundColor: "#4CAF50",
+                border: "none",
+                color: "white",
+                padding: "5px 10px",
+                cursor: "pointer",
+                borderRadius: "3px",
+              }}
+            >
+              OK
+            </button>
+            <button
+              onClick={closeToast}
+              style={{
+                backgroundColor: "#d9534f",
+                border: "none",
+                color: "white",
+                padding: "5px 10px",
+                cursor: "pointer",
+                borderRadius: "3px",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+      }
+    );
+  };
   // Save the event details after validation
   const handleSave = () => {
     if (!selectedEvent.clientName || !selectedEvent.clientId || !selectedEvent.serviceType) {
@@ -169,6 +209,23 @@ const EventDetailsModal = ({
       toast.error("You cannot save an event on a non-working day.");
       return;
     }
+  
+    // Check if start time is before end time
+    if (new Date(selectedEvent.start) >= new Date(selectedEvent.end)) {
+      toast.error("Start time must be before end time.");
+      return;
+    }
+  
+    if (selectedEvent.start && selectedEvent.end) {
+      const duration = calculateDuration(selectedEvent.start, selectedEvent.end);
+      const expectedDuration = selectedEvent.serviceDuration || 40;
+      // If the duration is not equal to the expected duration, show confirmation toast
+      if (duration !== expectedDuration) {
+        confirmAndSubmit();
+        return; // Exit early until confirmation
+      }
+    }
+    // If duration is fine, proceed with update
     handleUpdateEvent();
   };
 
@@ -218,9 +275,7 @@ const EventDetailsModal = ({
         <label className="block text-gray-700 font-semibold">Service:</label>
         <select
           className="w-full p-2 border rounded mb-2"
-          value={
-            services.find((s) => s.name === selectedEvent.serviceType)?._id || ""
-          }
+          value={services.find((s) => s.name === selectedEvent.serviceType)?._id || ""}
           onChange={(e) => {
             const selectedId = e.target.value;
             const selectedService = services.find((s) => s._id === selectedId);
@@ -229,7 +284,9 @@ const EventDetailsModal = ({
                 ...selectedEvent,
                 serviceType: selectedService.name,
                 serviceCharges: selectedService.price,
-                serviceId: selectedService._id, // Added serviceId here
+                serviceId: selectedService._id,
+                // Assume service object includes a duration field (default to 40 if not provided)
+                serviceDuration: selectedService.duration || 40,
               });
             } else {
               setSelectedEvent({
@@ -237,6 +294,7 @@ const EventDetailsModal = ({
                 serviceType: "",
                 serviceCharges: "",
                 serviceId: "",
+                serviceDuration: 40,
               });
             }
           }}

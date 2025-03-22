@@ -78,24 +78,34 @@ const NewAppointmentModal = ({
     staff?.services?.includes(service._id)
   );
 
-  // Handler for service type dropdown change
+  // Handler for service type dropdown change with duration added to start time
   const handleServiceTypeChange = (e) => {
     const selectedId = e.target.value;
     const selectedService = serviceTypes.find(
       (service) => service._id === selectedId
     );
     if (selectedService) {
+      // Ensure newEvent.start exists and parse it as a Date
+      const startDate = new Date(newEvent.start);
+      // Assuming service duration is in minutes:
+      const endDate = new Date(startDate.getTime() + selectedService.duration * 60000);
       setNewEvent({
         ...newEvent,
         serviceType: selectedService.name, // set the service name
         charges: selectedService.price, // update charges based on price
         serviceId: selectedService._id, // send the service ID as well
+        duration: selectedService.duration, // store duration in minutes
+        end: endDate, // computed end time from duration
       });
       console.log(
         "Service Type selected:",
         selectedService.name,
         "Price:",
-        selectedService.price
+        selectedService.price,
+        "Duration:",
+        selectedService.duration,
+        "Computed End Time:",
+        endDate
       );
     } else {
       setNewEvent({
@@ -103,6 +113,8 @@ const NewAppointmentModal = ({
         serviceType: "",
         charges: "",
         serviceId: "",
+        duration: "",
+        end: "",
       });
     }
   };
@@ -172,6 +184,17 @@ const NewAppointmentModal = ({
           type="number"
           className="w-full p-2 border rounded mb-4"
           value={newEvent.charges}
+          readOnly
+        />
+
+        {/* Display the duration */}
+        <label className="block text-sm font-medium mb-1">
+          Duration (minutes)
+        </label>
+        <input
+          type="number"
+          className="w-full p-2 border rounded mb-4"
+          value={newEvent.duration || ""}
           readOnly
         />
 

@@ -493,8 +493,8 @@ const ViewStaffComp = () => {
               startAccessor="start"
               endAccessor="end"
               style={{ height: 600, width: "100%" }}
-              step={60}
-              timeslots={1}
+              step={10}
+              timeslots={3}
               dayPropGetter={customDayPropGetter}
               onSelectSlot={handleSlotSelect}
               onSelectEvent={handleEventSelect}

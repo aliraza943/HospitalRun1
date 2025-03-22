@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Define tax options as HST, PST, and GST.
+// Define all possible tax options.
 const taxOptions = [
   { id: "HST", name: "HST" },
   { id: "PST", name: "PST" },
@@ -17,7 +18,6 @@ const ViewServicesComp = () => {
   const [filteredServices, setFilteredServices] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingService, setEditingService] = useState(null);
-  // Initialize taxes as an empty array.
   const [updatedService, setUpdatedService] = useState({
     name: "",
     price: "",
@@ -26,19 +26,36 @@ const ViewServicesComp = () => {
     taxes: [],
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // State for the allowed taxes fetched from the API.
+  const [allowedTaxes, setAllowedTaxes] = useState([]);
 
-  const handleSearch = (e) => {
-    const query = e.target.value.toLowerCase();
-    setSearchQuery(query);
-    const filtered = servicesList.filter(
-      (service) =>
-        service.name.toLowerCase().includes(query) ||
-        service.price.toString().includes(query) ||
-        service.duration.toString().includes(query)
-    );
-    setFilteredServices(filtered);
-  };
+  // Fetch allowed taxes from the server.
+  useEffect(() => {
+    const fetchTaxes = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8080/api/checkout/business/taxes",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const { taxes } = response.data;
+        if (taxes) {
+          // Here we assume that taxes is an object and we use its keys as allowed tax types.
+          setAllowedTaxes(Object.keys(taxes));
+        }
+      } catch (error) {
+        console.error("Failed to fetch taxes:", error);
+        // Optionally set an error message here.
+      }
+    };
 
+    fetchTaxes();
+  }, []);
+
+  // Fetch services list.
   useEffect(() => {
     const fetchServices = async () => {
       try {
@@ -63,6 +80,7 @@ const ViewServicesComp = () => {
           });
           return;
         }
+
         if (!res.ok) throw new Error("Failed to fetch services.");
 
         const data = await res.json();
@@ -75,6 +93,18 @@ const ViewServicesComp = () => {
 
     fetchServices();
   }, [navigate]);
+
+  const handleSearch = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    const filtered = servicesList.filter(
+      (service) =>
+        service.name.toLowerCase().includes(query) ||
+        service.price.toString().includes(query) ||
+        service.duration.toString().includes(query)
+    );
+    setFilteredServices(filtered);
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this service?")) return;
@@ -112,15 +142,13 @@ const ViewServicesComp = () => {
 
   const handleEdit = (service) => {
     setEditingService(service._id);
-    // Ensure taxes is an array and always include GST.
+    // Use the service's taxes directly without forcing GST.
     const serviceTaxes = Array.isArray(service.taxes) ? service.taxes : [];
-    const newTaxes = serviceTaxes.includes("GST") ? serviceTaxes : [...serviceTaxes, "GST"];
-    setUpdatedService({ ...service, taxes: newTaxes });
+    setUpdatedService({ ...service, taxes: serviceTaxes });
     setIsModalOpen(true);
   };
 
   const handleTaxCheckboxChange = (e, taxId) => {
-    // This handler is only for editable tax options (non-GST)
     if (e.target.checked) {
       setUpdatedService((prevState) => ({
         ...prevState,
@@ -171,6 +199,11 @@ const ViewServicesComp = () => {
       toast.error("Failed to update service.");
     }
   };
+
+  // Filter the tax options so that only allowed taxes are rendered.
+  const filteredTaxOptions = taxOptions.filter((tax) =>
+    allowedTaxes.includes(tax.id)
+  );
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
@@ -275,32 +308,25 @@ const ViewServicesComp = () => {
                 className="w-full p-2 border rounded"
                 required
               />
-              {/* Render checkboxes for HST, PST, and GST */}
-              <div>
-                <p className="font-medium mb-2">Taxes</p>
-                {taxOptions.map((tax) => (
-                  <div key={tax.id} className="flex items-center mb-1">
-                    <input
-                      type="checkbox"
-                      id={tax.id}
-                      checked={
-                        tax.id === "GST"
-                          ? true
-                          : updatedService.taxes.includes(tax.id)
-                      }
-                      onChange={
-                        tax.id === "GST"
-                          ? null
-                          : (e) => handleTaxCheckboxChange(e, tax.id)
-                      }
-                      disabled={tax.id === "GST"}
-                    />
-                    <label htmlFor={tax.id} className="ml-2">
-                      {tax.name}
-                    </label>
-                  </div>
-                ))}
-              </div>
+              {/* Render checkboxes for only allowed tax options */}
+              {filteredTaxOptions.length > 0 && (
+                <div>
+                  <p className="font-medium mb-2">Taxes</p>
+                  {filteredTaxOptions.map((tax) => (
+                    <div key={tax.id} className="flex items-center mb-1">
+                      <input
+                        type="checkbox"
+                        id={tax.id}
+                        checked={updatedService.taxes.includes(tax.id)}
+                        onChange={(e) => handleTaxCheckboxChange(e, tax.id)}
+                      />
+                      <label htmlFor={tax.id} className="ml-2">
+                        {tax.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="flex justify-end space-x-2">
                 <button
                   type="button"
