@@ -13,18 +13,6 @@ const EventDetailsModal = ({
   staffservices,
   staff, // Array of service IDs that belong to the staff member
 }) => {
-<<<<<<< HEAD
-=======
-  console.log(showEventDetailsModal,
-    selectedEvent,
-    setSelectedEvent,
-    setShowEventDetailsModal,
-    handleUpdateEvent,
-    handleDeleteEvent,
-    workingHours,
-    staffservices,
-    staff)
->>>>>>> d7ed616f039ec889fd4181ae83e35fe76d6971f4
   // State for time range and working day check
   const [timeRange, setTimeRange] = useState([{ min: "09:00", max: "18:00" }]);
   const [isWorkingDay, setIsWorkingDay] = useState(true);
@@ -172,7 +160,7 @@ const EventDetailsModal = ({
     toast(
       ({ closeToast }) => (
         <div>
-          <p>This is not the expected duration for this event. Are you sure?</p>
+          <p>This is not the expected duration for this service. Are you sure?</p>
           <div className="flex justify-between mt-2">
             <button
               onClick={() => {
