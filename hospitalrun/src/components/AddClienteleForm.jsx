@@ -5,15 +5,15 @@ import { useNavigate, useLocation } from "react-router-dom";
 const AddClienteleForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Check if providerId exists in location.state
   const providerId = location.state?.providerId;
-  
+
   const initialClientState = {
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
+    name: "test",
+    email: "test@gmail.com",
+    phone: "1234567",
+    address: "abcdf",
     ...(providerId ? { providerId } : {})
   };
 
@@ -62,9 +62,8 @@ const AddClienteleForm = () => {
 
       {message && (
         <div
-          className={`p-3 mb-4 text-white rounded ${
-            message.includes("success") ? "bg-green-500" : "bg-red-500"
-          }`}
+          className={`p-3 mb-4 text-white rounded ${message.includes("success") ? "bg-green-500" : "bg-red-500"
+            }`}
         >
           {message}
         </div>
