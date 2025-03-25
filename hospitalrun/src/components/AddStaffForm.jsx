@@ -112,8 +112,9 @@ const AddStaffForm = () => {
 
       {message && (
         <div
-          className={`p-3 mb-4 text-white rounded ${message.includes("success") ? "bg-green-500" : "bg-red-500"
-            }`}
+          className={`p-3 mb-4 text-white rounded ${
+            message.includes("success") ? "bg-green-500" : "bg-red-500"
+          }`}
         >
           {message}
         </div>
@@ -176,10 +177,15 @@ const AddStaffForm = () => {
         {/* For provider Role: Show service checkboxes */}
         {staff.role === "provider" && (
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">Select Services</label>
+            <label className="block text-gray-700 font-semibold mb-2">
+              Select Services
+            </label>
             <div className="flex flex-wrap gap-2">
               {fetchedServices.map((service) => (
-                <label key={service._id} className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg shadow-sm">
+                <label
+                  key={service._id}
+                  className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-lg shadow-sm"
+                >
                   <input
                     type="checkbox"
                     value={service._id}
@@ -193,10 +199,6 @@ const AddStaffForm = () => {
             </div>
           </div>
         )}
-
-
-        {/* Working Hours - Only for non-providers (optional) */}
-
 
         {/* Permissions - Only for Front Desk */}
         {staff.role === "frontdesk" && (
@@ -262,6 +264,17 @@ const AddStaffForm = () => {
                   className="mr-2"
                 />
                 Manage Clientele
+              </label>
+              {/* New Permission for managing products */}
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  value="manage_products"
+                  checked={staff.permissions.includes("manage_products")}
+                  onChange={handlePermissionsChange}
+                  className="mr-2"
+                />
+                Manage Products
               </label>
             </div>
           </div>

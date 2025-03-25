@@ -121,6 +121,9 @@ const SidebarComp = () => {
                 {(isAdmin || user?.permissions?.includes("manage_staff")) && (
                   <MenuItem><Link to="/viewStaff">View Staff</Link></MenuItem>
                 )}
+                   {(isAdmin || user?.permissions?.includes("manage_products")) && (
+                  <MenuItem><Link to="/viewProducts">View Products</Link></MenuItem>
+                )}
               </SubMenu>
             )}
           <MenuItem onClick={handleLogout}>Logout</MenuItem>

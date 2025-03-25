@@ -4,14 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Define the permission options for frontdesk users.
+// Define the permission options for frontdesk users, including manage_products.
 const permissionOptions = [
   "manage_services",
   "manage_staff",
   "manage_businessHours",
   "modify_working_hours",
   "manage_appointments",
-  "manage_clientele", // New permission added
+  "manage_clientele",
+  "manage_products", // New permission added
 ];
 
 const ViewStaffComp = () => {
@@ -27,7 +28,7 @@ const ViewStaffComp = () => {
     workingHours: "",
     // For frontdesk users, permissions will be stored as an object.
     permissions: {},
-    // For provider/provider, services is an array of selected service IDs.
+    // For providers, services is an array of selected service IDs.
     services: [],
   });
   const [services, setServices] = useState([]);
@@ -141,7 +142,6 @@ const ViewStaffComp = () => {
     }
 
     setUpdatedStaff(updatedStaffData);
-    console.log(updatedStaff);
     setIsModalOpen(true);
   };
 

@@ -19,6 +19,8 @@ import ViewClientele from './pages/Clientele/ViewClientele'
 import AddClienteleForm from './pages/Clientele/AddClientele';
 import AdminViewClientele from "./pages/Clientele/ViewAdminClientele"
 import ViewCashier from './pages/staff/Cashier';
+import ViewProducts from './pages/products/ViewProducts';
+import AddProducts from './pages/products/AddProducts';
 const App = () => {
   return (
     <Router>
@@ -39,6 +41,8 @@ const App = () => {
         <Route path="/addClienteleForm" element={<AddClienteleForm />} />
         <Route path="/adminViewClientele" element={<AdminViewClientele />} />
         <Route path="/frontDeskCheckout" element={<ViewCashier />} />
+        <Route path="/viewProducts" element={<ViewProducts />} />
+        <Route path="/AddProducts" element={<AddProducts />} />
         
 
       </Routes>
