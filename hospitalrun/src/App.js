@@ -17,6 +17,7 @@ import Login from './components/Login'
 import Unauthorized from './pages/Unauthorized/unauthorizedPage';
 import ViewClientele from './pages/Clientele/ViewClientele'
 import AddClienteleForm from './pages/Clientele/AddClientele';
+import ClienteleDetails from './pages/Clientele/ClientDetailsPage';
 import AdminViewClientele from "./pages/Clientele/ViewAdminClientele"
 import ViewCashier from './pages/staff/Cashier';
 import ViewProducts from './pages/products/ViewProducts';
@@ -43,6 +44,7 @@ const App = () => {
         <Route path="/frontDeskCheckout" element={<ViewCashier />} />
         <Route path="/viewProducts" element={<ViewProducts />} />
         <Route path="/AddProducts" element={<AddProducts />} />
+        <Route path="/clientDetails" element={<ClienteleDetails />} />
         
 
       </Routes>

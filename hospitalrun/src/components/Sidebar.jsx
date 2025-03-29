@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 const SidebarComp = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
-  console.log(user,"LOL")
+  console.log(user, "LOL");
   const [activeSubmenu, setActiveSubmenu] = useState(localStorage.getItem("activeSubmenu") || null);
 
   useEffect(() => {
@@ -15,8 +15,7 @@ const SidebarComp = () => {
   }, [activeSubmenu]);
 
   const toggleSubMenu = (menu) => {
-    // If the clicked menu is already active, close it
-    // Otherwise set it as the active menu (closing any other open menu)
+    // If the clicked menu is already active, close it; otherwise, set it as active
     setActiveSubmenu(activeSubmenu === menu ? null : menu);
   };
 
@@ -52,7 +51,7 @@ const SidebarComp = () => {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    localStorage.removeItem("activeSubmenu"); // Also clear the active submenu on logout
+    localStorage.removeItem("activeSubmenu"); // Clear the active submenu on logout
     navigate("/login");
   };
 
@@ -62,7 +61,7 @@ const SidebarComp = () => {
   const hasManageClientele = user?.permissions?.includes("manage_clientele");
 
   return (
-    <div className='mainContainer'>
+    <div className='mainContainer' style={{ height: '100vh' }}>
       <Sidebar className="sidebar">
         <img src={myLogo} alt="Logo" className="sidebar-logo" />
         <Menu>
@@ -107,25 +106,25 @@ const SidebarComp = () => {
             user?.permissions?.includes("manage_services") ||
             user?.permissions?.includes("manage_businessHours")
           ))) && (
-              <SubMenu
-                label="Admin"
-                open={activeSubmenu === 'Admin'}
-                onOpenChange={() => toggleSubMenu('Admin')}
-              >
-                {(isAdmin || user?.permissions?.includes("manage_services")) && (
-                  <MenuItem><Link to="/viewServices">View Services</Link></MenuItem>
-                )}
-                {(isAdmin || user?.permissions?.includes("manage_businessHours")) && (
-                  <MenuItem><Link to="/adminCalendar">View Calendar</Link></MenuItem>
-                )}
-                {(isAdmin || user?.permissions?.includes("manage_staff")) && (
-                  <MenuItem><Link to="/viewStaff">View Staff</Link></MenuItem>
-                )}
-                   {(isAdmin || user?.permissions?.includes("manage_products")) && (
-                  <MenuItem><Link to="/viewProducts">View Products</Link></MenuItem>
-                )}
-              </SubMenu>
-            )}
+            <SubMenu
+              label="Admin"
+              open={activeSubmenu === 'Admin'}
+              onOpenChange={() => toggleSubMenu('Admin')}
+            >
+              {(isAdmin || user?.permissions?.includes("manage_services")) && (
+                <MenuItem><Link to="/viewServices">View Services</Link></MenuItem>
+              )}
+              {(isAdmin || user?.permissions?.includes("manage_businessHours")) && (
+                <MenuItem><Link to="/adminCalendar">View Calendar</Link></MenuItem>
+              )}
+              {(isAdmin || user?.permissions?.includes("manage_staff")) && (
+                <MenuItem><Link to="/viewStaff">View Staff</Link></MenuItem>
+              )}
+              {(isAdmin || user?.permissions?.includes("manage_products")) && (
+                <MenuItem><Link to="/viewProducts">View Products</Link></MenuItem>
+              )}
+            </SubMenu>
+          )}
           <MenuItem onClick={handleLogout}>Logout</MenuItem>
         </Menu>
       </Sidebar>

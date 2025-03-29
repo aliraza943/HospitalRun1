@@ -3,13 +3,14 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import EditClientModal from "./EditClientModal";
+ 
 const ViewServicesComp = () => {
     const navigate = useNavigate();
     const [clients, setClients] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [editingClient, setEditingClient] = useState(null);
-    const [updatedClient, setUpdatedClient] = useState({ name: "", email: "", phone: "", address: "" });
+    const [updatedClient, setUpdatedClient] = useState({ username: "", email: "", phone: "", address: "" });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -33,6 +34,7 @@ const ViewServicesComp = () => {
     
                 const data = await response.json();
                 setClients(data);
+                console.log(data);
                 setLoading(false);
             } catch (err) {
                 setError(err.message);
@@ -47,7 +49,9 @@ const ViewServicesComp = () => {
         setSearchQuery(e.target.value.toLowerCase());
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id, e) => {
+        // Stop propagation so the row click isn't triggered
+        e.stopPropagation();
         if (!window.confirm("Are you sure you want to delete this client?")) return;
         
         try {
@@ -63,15 +67,15 @@ const ViewServicesComp = () => {
         }
     };
 
-    const handleEdit = (client) => {
+    const handleEdit = (client, e) => {
+        // Stop propagation so the row click isn't triggered
+        e.stopPropagation();
         setEditingClient(client._id);
         setUpdatedClient(client);
         setIsModalOpen(true);
     };
 
     const handleUpdate = async (e) => {
-        e.preventDefault();
-
         try {
             const response = await fetch(`http://localhost:8080/api/clientelle/${editingClient}`, {
                 method: "PUT",
@@ -99,7 +103,8 @@ const ViewServicesComp = () => {
                 <h2 className="text-2xl font-semibold">Clientele List</h2>
                 <button 
                     onClick={() => navigate('/addClienteleForm')} 
-                    className="bg-blue-500 text-white px-4 py-2 rounded">
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
                     Add Clientele
                 </button>
             </div>
@@ -126,16 +131,26 @@ const ViewServicesComp = () => {
                     {clients
                         .filter(client => client.username.toLowerCase().includes(searchQuery))
                         .map((client) => (
-                            <tr key={client._id} className="border">
+                            <tr 
+                                key={client._id} 
+                                className="border cursor-pointer hover:bg-gray-100" 
+                                onClick={() => navigate("/clientDetails", { state: { client } })}
+                            >
                                 <td className="border p-2">{client.username}</td>
                                 <td className="border p-2">{client.email}</td>
                                 <td className="border p-2">{client.phone}</td>
-                                <td className="border p-2">{client.address}</td>
+                                <td className="border p-2">{client.address1}</td>
                                 <td className="border p-2 space-x-2">
-                                    <button onClick={() => handleEdit(client)} className="text-blue-500 text-lg">
+                                    <button 
+                                        onClick={(e) => handleEdit(client, e)} 
+                                        className="text-blue-500 text-lg"
+                                    >
                                         <FaEdit />
                                     </button>
-                                    <button onClick={() => handleDelete(client._id)} className="text-red-500 text-lg">
+                                    <button 
+                                        onClick={(e) => handleDelete(client._id, e)} 
+                                        className="text-red-500 text-lg"
+                                    >
                                         <FaTrash />
                                     </button>
                                 </td>
@@ -145,53 +160,12 @@ const ViewServicesComp = () => {
             </table>
 
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-                    <div className="bg-white p-6 rounded shadow-lg w-1/3">
-                        <h3 className="text-xl font-semibold mb-4">Edit Client</h3>
-                        <form onSubmit={handleUpdate} className="space-y-4">
-                            <input
-                                type="text"
-                                value={updatedClient.username}
-                                onChange={(e) => setUpdatedClient({ ...updatedClient, username: e.target.value })}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                            <input
-                                type="email"
-                                value={updatedClient.email}
-                                onChange={(e) => setUpdatedClient({ ...updatedClient, email: e.target.value })}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                            <input
-                                type="tel"
-                                value={updatedClient.phone}
-                                onChange={(e) => setUpdatedClient({ ...updatedClient, phone: e.target.value })}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                            <input
-                                type="text"
-                                value={updatedClient.address}
-                                onChange={(e) => setUpdatedClient({ ...updatedClient, address: e.target.value })}
-                                className="w-full p-2 border rounded"
-                                required
-                            />
-                            <div className="flex justify-end space-x-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="bg-gray-500 text-white px-4 py-2 rounded"
-                                >
-                                    Cancel
-                                </button>
-                                <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">
-                                    Update Client
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <EditClientModal 
+                  updatedClient={updatedClient}
+                  setUpdatedClient={setUpdatedClient}
+                  handleUpdate={handleUpdate}
+                  onCancel={() => setIsModalOpen(false)}
+                />
             )}
         </div>
     );

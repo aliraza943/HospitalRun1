@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { toast } from "react-toastify";
+import EditClientModal from "./EditClientModal"; // adjust the path as needed
 
 const StaffClienteleView = () => {
   const navigate = useNavigate();
@@ -9,7 +11,12 @@ const StaffClienteleView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch staff list from API
+  // State for editing
+  const [editingClient, setEditingClient] = useState(null);
+  const [updatedClient, setUpdatedClient] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Fetch staff data
   useEffect(() => {
     const fetchStaff = async () => {
       try {
@@ -32,7 +39,7 @@ const StaffClienteleView = () => {
     fetchStaff();
   }, []);
 
-  // Fetch clientele from API
+  // Fetch clientele data
   useEffect(() => {
     const fetchClients = async () => {
       try {
@@ -60,14 +67,61 @@ const StaffClienteleView = () => {
   if (loading) return <p className="text-center mt-4">Loading...</p>;
   if (error) return <p className="text-center mt-4 text-red-500">Error: {error}</p>;
 
-  // Filter to only show staff with role "provider"
+  // Filter staff by provider role
   const providerStaff = staffList.filter((staff) => staff.role === "provider");
+
+  // Opens the edit modal with the selected client's data
+  const handleEdit = (client) => {
+    setEditingClient(client);
+    setUpdatedClient(client);
+    setIsModalOpen(true);
+  };
+
+  // Sends update to API and updates local state
+  const handleUpdate = async (updatedData) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/clientelle/${editingClient._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (!response.ok) throw new Error("Failed to update client.");
+
+      setClients(clients.map(client => 
+        client._id === editingClient._id ? updatedData : client
+      ));
+      setEditingClient(null);
+      setIsModalOpen(false);
+      toast.success("Client updated successfully!");
+    } catch (err) {
+      toast.error("Error updating client: " + err.message);
+    }
+  };
+
+  // Delete function to remove a client
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this client?")) return;
+    
+    try {
+      const response = await fetch(`http://localhost:8080/api/clientelle/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete client.");
+
+      setClients(clients.filter(client => client._id !== id));
+      toast.success("Client deleted successfully!");
+    } catch (err) {
+      toast.error("Error deleting client: " + err.message);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto mt-10 p-6">
       <h2 className="text-3xl font-bold text-center mb-8">Providers List and Their Clientele</h2>
       {providerStaff.map((staff) => {
-        // Filter clients whose providerId matches this provider's _id
+        // Filter clients for this provider
         const staffClients = clients.filter(client => client.providerId === staff._id);
         return (
           <div key={staff._id} className="mb-10 border border-gray-200 rounded-lg shadow-lg p-6 bg-white">
@@ -88,20 +142,30 @@ const StaffClienteleView = () => {
             {staffClients.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {staffClients.map((client) => (
-                  <div key={client._id} className="border rounded p-4 shadow hover:shadow-lg transition-shadow">
+                  <div
+                    key={client._id}
+                    className="border rounded p-4 shadow hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => navigate("/clientDetails", { state: { client } })}
+                  >
                     <h4 className="font-bold text-lg mb-2">{client.username}</h4>
                     <p className="text-sm text-gray-700">{client.email}</p>
                     <p className="text-sm text-gray-700">{client.phone}</p>
                     <p className="text-sm text-gray-700">{client.address}</p>
                     <div className="flex space-x-3 mt-3">
                       <button
-                        onClick={() => console.log("Edit", client._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(client);
+                        }}
                         className="text-blue-500 hover:text-blue-600 transition-colors"
                       >
                         <FaEdit />
                       </button>
                       <button
-                        onClick={() => console.log("Delete", client._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(client._id);
+                        }}
                         className="text-red-500 hover:text-red-600 transition-colors"
                       >
                         <FaTrash />
@@ -116,6 +180,14 @@ const StaffClienteleView = () => {
           </div>
         );
       })}
+      {isModalOpen && updatedClient && (
+        <EditClientModal 
+          updatedClient={updatedClient}
+          setUpdatedClient={setUpdatedClient}
+          handleUpdate={handleUpdate}
+          onCancel={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

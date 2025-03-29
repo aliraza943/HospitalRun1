@@ -322,7 +322,7 @@ const ViewServicesComp = () => {
                       />
                       <label htmlFor={tax.id} className="ml-2">
                         {tax.name}
-                      </label>
+                    </label>
                     </div>
                   ))}
                 </div>

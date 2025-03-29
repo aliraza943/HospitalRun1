@@ -1,7 +1,7 @@
 import React from 'react';
 import SidebarComp from '../../components/Sidebar';
 import Header from '../../components/Header';
-import AddStaffForm from '../../components/AddClienteleForm';
+import AddStaffForm from '../../components/ClientDetails';
 
 const AddStaff = () => {
     return (
