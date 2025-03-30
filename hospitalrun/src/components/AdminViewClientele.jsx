@@ -80,9 +80,13 @@ const StaffClienteleView = () => {
   // Sends update to API and updates local state
   const handleUpdate = async (updatedData) => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`http://localhost:8080/api/clientelle/${editingClient._id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(updatedData),
       });
 

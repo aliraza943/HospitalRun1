@@ -201,11 +201,8 @@ const EditClientModal = ({ updatedClient, setUpdatedClient, handleUpdate, onCanc
                 <label className="block text-gray-700">Date of Birth</label>
                 <input
                   type="date"
-                  value={
-                    updatedClient.dateOfBirth
-                      ? updatedClient.dateOfBirth.split("T")[0]
-                      : ""
-                  }
+                  value={updatedClient.dateOfBirth ? new Date(updatedClient.dateOfBirth).toISOString().split("T")[0] : ""}
+
                   onChange={(e) =>
                     setUpdatedClient({ ...updatedClient, dateOfBirth: e.target.value })
                   }
