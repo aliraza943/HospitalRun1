@@ -17,30 +17,28 @@ const ClientGallery = ({ client }) => {
 
   useEffect(() => {
     if (!client?._id) return;
-
-    const fetchImages = async () => {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-
-      try {
-        const response = await fetch(
-          `http://localhost:8080/api/clientelle/getImages/${client._id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!response.ok) throw new Error("Failed to fetch images");
-        const data = await response.json();
-        setImages(data.images || []);
-        console.log(data.images)
-      } catch (error) {
-        console.error("Error fetching images:", error);
-      }
-      setLoading(false);
-    };
-
     fetchImages();
-  }, [client?._id]);
+  }, [client?._id])
+  const fetchImages = async () => {
+    setLoading(true);
+    const token = localStorage.getItem("token");
+  
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/clientelle/getImages/${client._id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch images");
+      const data = await response.json();
+      setImages(data.images || []);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+    }
+    setLoading(false);
+  };
+  
 
   const handleChooseFile = () => {
     fileInputRef.current.click();
@@ -74,17 +72,17 @@ const ClientGallery = ({ client }) => {
       setError("No file selected");
       return;
     }
-
+  
     if (!validateForm()) {
       return;
     }
-
+  
     const token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append("image", selectedFile);
     formData.append("description", description);
     formData.append("date", date);
-
+  
     try {
       const response = await fetch(
         `http://localhost:8080/api/clientelle/upload/${client._id}`,
@@ -95,17 +93,16 @@ const ClientGallery = ({ client }) => {
         }
       );
       const result = await response.json();
-
+  
       if (response.ok) {
-        setImages((prev) => [
-          ...prev,
-          { url: result.imageUrl, description, date },
-        ]);
         setSelectedFile(null);
         setPreview(null);
         setDescription("");
         setDate(new Date().toISOString().split("T")[0]);
         setShowModal(false);
+        
+        // Refetch images after successful upload
+        fetchImages();
       } else {
         setError(result.message || "Upload failed");
       }
@@ -114,6 +111,7 @@ const ClientGallery = ({ client }) => {
       console.error("Error uploading image:", error);
     }
   };
+  
 
   const openImageViewer = (index) => {
     setCurrentImageIndex(index);
