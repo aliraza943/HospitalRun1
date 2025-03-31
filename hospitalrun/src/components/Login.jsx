@@ -18,7 +18,7 @@ const Footer = () => (
 
 const Login = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("password123");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -42,7 +42,7 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(user));
       console.log(user); // Store user info
 
-      toast.success("Login Successful!"); 
+      toast.success("Login Successful!");
 
       setLoading(false);
       navigate("/");
