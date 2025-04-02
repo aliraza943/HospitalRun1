@@ -22,7 +22,7 @@ const ClientGallery = ({ client }) => {
   const fetchImages = async () => {
     setLoading(true);
     const token = localStorage.getItem("token");
-  
+
     try {
       const response = await fetch(
         `http://localhost:8080/api/clientelle/getImages/${client._id}`,
@@ -38,7 +38,7 @@ const ClientGallery = ({ client }) => {
     }
     setLoading(false);
   };
-  
+
 
   const handleChooseFile = () => {
     fileInputRef.current.click();
@@ -72,17 +72,17 @@ const ClientGallery = ({ client }) => {
       setError("No file selected");
       return;
     }
-  
+
     if (!validateForm()) {
       return;
     }
-  
+
     const token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append("image", selectedFile);
     formData.append("description", description);
     formData.append("date", date);
-  
+
     try {
       const response = await fetch(
         `http://localhost:8080/api/clientelle/upload/${client._id}`,
@@ -93,14 +93,14 @@ const ClientGallery = ({ client }) => {
         }
       );
       const result = await response.json();
-  
+
       if (response.ok) {
         setSelectedFile(null);
         setPreview(null);
         setDescription("");
         setDate(new Date().toISOString().split("T")[0]);
         setShowModal(false);
-        
+
         // Refetch images after successful upload
         fetchImages();
       } else {
@@ -111,7 +111,7 @@ const ClientGallery = ({ client }) => {
       console.error("Error uploading image:", error);
     }
   };
-  
+
 
   const openImageViewer = (index) => {
     setCurrentImageIndex(index);
@@ -170,64 +170,63 @@ const ClientGallery = ({ client }) => {
       ) : images.length > 0 ? (
         // Wrapping the grid in a relative container so we can position pagination arrows
         <div className="relative mb-8 pl-12 pr-12">
-        <button
-          onClick={() => navigateToPage("prev")}
-          disabled={currentPage === 0}
-          className={`absolute left-[-20px] top-1/2 transform -translate-y-1/2 z-10 px-3 py-2 rounded-md ${
-            currentPage === 0
+          <button
+            onClick={() => navigateToPage("prev")}
+            disabled={currentPage === 0}
+            className={`absolute left-[-20px] top-1/2 transform -translate-y-1/2 z-10 px-3 py-2 rounded-md ${currentPage === 0
               ? "bg-gray-300 cursor-not-allowed"
               : "bg-blue-500 text-white hover:bg-blue-600"
-          }`}
-          aria-label="Previous page"
-        >
-          &#8592;
-        </button>
-      
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {getCurrentPageImages().map((img, index) => {
-            const actualIndex = currentPage * imagesPerPage + index;
-            return (
-              <div
-                key={actualIndex}
-                className="border rounded-md overflow-hidden cursor-pointer hover:shadow-md transition"
-                onClick={() => openImageViewer(actualIndex)}
-              >
-                <div className="relative">
-                  <img
-                    src={`http://localhost:8080/api/clientelle${img.url}`}
-                    alt="Client Gallery"
-                    className="w-full h-40 object-cover"
-                  />
+              }`}
+            aria-label="Previous page"
+          >
+            &#8592;
+          </button>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {getCurrentPageImages().map((img, index) => {
+              const actualIndex = currentPage * imagesPerPage + index;
+              return (
+                <div
+                  key={actualIndex}
+                  className="border bg-gray-50 rounded-md overflow-hidden cursor-pointer hover:shadow-md transition"
+                  onClick={() => openImageViewer(actualIndex)}
+                >
+                  <div className="relative">
+                    <img
+                      src={`http://localhost:8080/api/clientelle${img.url}`}
+                      alt="Client Gallery"
+                      className="w-full h-40 object-cover"
+                    />
+                  </div>
+                  <div className="p-2 bg-gray-50 text-center">
+                    <p className="text-s font-bold mt-1">
+                      {new Date(img.date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                    <p className="text-lg font-bold">{img.description}</p>
+
+                  </div>
                 </div>
-                <div className="p-2 bg-gray-50">
-                  <p className="text-sm font-medium">{img.description}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-  {new Date(img.date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })}
-</p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => navigateToPage("next")}
+            disabled={currentPage >= totalPages - 1}
+            className={`absolute right-[-20px] top-1/2 transform -translate-y-1/2 z-10 px-3 py-2 rounded-md ${currentPage >= totalPages - 1
+              ? "bg-gray-300 cursor-not-allowed"
+              : "bg-blue-500 text-white hover:bg-blue-600"
+              }`}
+            aria-label="Next page"
+          >
+            &#8594;
+          </button>
         </div>
-      
-        <button
-          onClick={() => navigateToPage("next")}
-          disabled={currentPage >= totalPages - 1}
-          className={`absolute right-[-20px] top-1/2 transform -translate-y-1/2 z-10 px-3 py-2 rounded-md ${
-            currentPage >= totalPages - 1
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-blue-500 text-white hover:bg-blue-600"
-          }`}
-          aria-label="Next page"
-        >
-          &#8594;
-        </button>
-      </div>
-            ) : (
+      ) : (
         <p className="text-gray-700">
           No gallery images available for this client.
         </p>
@@ -339,11 +338,12 @@ const ClientGallery = ({ client }) => {
           <div className="relative w-full h-full flex items-center justify-center">
             <button
               onClick={(e) => navigateToPrevImage(e)}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-60 p-3 rounded-full text-xl hover:bg-opacity-80 z-10"
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white bg-opacity-60 flex items-center justify-center rounded-full text-2xl hover:bg-opacity-80 shadow-md z-10"
               aria-label="Previous image"
             >
               &#8592;
             </button>
+
 
             <div className="max-w-4xl w-full mx-12">
               <img
@@ -352,34 +352,37 @@ const ClientGallery = ({ client }) => {
                 className="max-h-screen max-w-full object-contain mx-auto"
               />
               <div className="mt-4 text-white text-center">
+
+                <p className="text-sm opacity-80 mt-1">
+                  {new Date(images[currentImageIndex].date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
                 <p className="font-medium text-lg">
                   {images[currentImageIndex].description}
-                </p>
-                <p className="text-sm opacity-80 mt-1">
-                {new Date(images[currentImageIndex].date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })}
                 </p>
               </div>
             </div>
 
             <button
               onClick={(e) => navigateToNextImage(e)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-60 p-3 rounded-full text-xl hover:bg-opacity-80 z-10"
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white bg-opacity-60 flex items-center justify-center rounded-full text-2xl hover:bg-opacity-80 shadow-md z-10"
               aria-label="Next image"
             >
               &#8594;
             </button>
 
+
             <button
               onClick={() => setViewerOpen(false)}
-              className="absolute top-4 right-4 bg-white bg-opacity-70 p-2 rounded-full hover:bg-opacity-90 z-10"
+              className="absolute top-4 right-4 w-10 h-10 bg-white bg-opacity-70 flex items-center justify-center rounded-full hover:bg-opacity-90 shadow-md z-10"
               aria-label="Close viewer"
             >
               &#10005;
             </button>
+
           </div>
         </div>
       )}
