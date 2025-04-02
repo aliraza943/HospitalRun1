@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ClientDetailsData from "./ClientDetailsData";
 import ClientGallery from "./ClientGallery";
+import ClientNotes from "./ClientNotes";
 
 const ClientProfile = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const client = location.state?.client;
   const [activeTab, setActiveTab] = useState("details");
-  console.log(client)
 
   if (!client) {
     return (
@@ -31,33 +31,24 @@ const ClientProfile = () => {
       </div>
       {/* Selection Bar */}
       <div className="flex border-b mb-4">
-        <button
-          onClick={() => setActiveTab("details")}
-          className={`px-4 py-2 focus:outline-none ${
-            activeTab === "details"
-              ? "border-b-2 border-blue-500 font-semibold"
-              : "text-gray-600"
-          }`}
-        >
-          Details
-        </button>
-        <button
-          onClick={() => setActiveTab("gallery")}
-          className={`px-4 py-2 focus:outline-none ${
-            activeTab === "gallery"
-              ? "border-b-2 border-blue-500 font-semibold"
-              : "text-gray-600"
-          }`}
-        >
-          Gallery
-        </button>
+        {["details", "gallery", "notes"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 focus:outline-none ${
+              activeTab === tab
+                ? "border-b-2 border-blue-500 font-semibold"
+                : "text-gray-600"
+            }`}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
       </div>
       {/* Tab Content */}
-      {activeTab === "details" ? (
-        <ClientDetailsData client={client} />
-      ) : (
-        <ClientGallery client={client} />
-      )}
+      {activeTab === "details" && <ClientDetailsData client={client} />}
+      {activeTab === "gallery" && <ClientGallery client={client} />}
+      {activeTab === "notes" && <ClientNotes client={client} />}
     </div>
   );
 };
