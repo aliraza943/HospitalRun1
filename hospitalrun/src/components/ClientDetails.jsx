@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ClientDetailsData from "./ClientDetailsData";
 import ClientGallery from "./ClientGallery";
 import ClientNotes from "./ClientNotes";
+import ClientAppointments from "./ClientAppointments"; // New component import
 
 const ClientProfile = () => {
   const location = useLocation();
@@ -31,7 +32,7 @@ const ClientProfile = () => {
       </div>
       {/* Selection Bar */}
       <div className="flex border-b mb-4">
-        {["details", "gallery", "notes"].map((tab) => (
+        {["details", "gallery", "notes", "clientAppointments"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -49,6 +50,9 @@ const ClientProfile = () => {
       {activeTab === "details" && <ClientDetailsData client={client} />}
       {activeTab === "gallery" && <ClientGallery client={client} />}
       {activeTab === "notes" && <ClientNotes client={client} />}
+      {activeTab === "clientAppointments" && (
+        <ClientAppointments client={client} />
+      )}
     </div>
   );
 };
