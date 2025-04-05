@@ -14,6 +14,7 @@ const ClientAppointments = ({ client }) => {
           throw new Error("Failed to fetch appointments");
         }
         const data = await response.json();
+        console.log(data);
         // Assuming the appointments are returned in the "data" property
         setAppointments(data.data);
       } catch (err) {
@@ -42,49 +43,43 @@ const ClientAppointments = ({ client }) => {
       {appointments.length === 0 ? (
         <p>No appointments found.</p>
       ) : (
-        <table className="min-w-full border-collapse border border-gray-300">
+        <table className="min-w-full border-collapse">
           <thead>
             <tr className="bg-gray-200">
-              <th className="px-4 py-2 border">Service</th>
-              <th className="px-4 py-2 border">Date</th>
-              <th className="px-4 py-2 border">Start Time</th>
-              <th className="px-4 py-2 border">End Time</th>
-              <th className="px-4 py-2 border">Status</th>
-              <th className="px-4 py-2 border">Staff</th>
-              <th className="px-4 py-2 border">Total Bill</th>
+              <th className="px-4 py-2 text-center flex-1">Date</th>
+              <th className="px-4 py-2 text-center flex-1">Status</th>
+              <th className="px-4 py-2 text-center flex-1">Description</th>
             </tr>
           </thead>
           <tbody>
             {appointments.map((appointment) => {
-              // Extract date, start time, and end time separately
+              // Extract the start date from the appointment's start property
               const startDate = new Date(appointment.start);
-              const endDate = new Date(appointment.end);
+              const formattedDate = startDate.toLocaleDateString(); // Format: MM/DD/YYYY
 
-              const date = startDate.toLocaleDateString(); // Format: MM/DD/YYYY
-              const startTime = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-              const endTime = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-              // Apply conditional styling based on appointment status
-              let rowStyle = "";
-              if (appointment.status === "booked") {
-                rowStyle = "bg-green-100";
-              } else if (appointment.status === "cancelled") {
-                rowStyle = "bg-red-100";
-              } else if (appointment.status === "completed") {
-                rowStyle = "bg-blue-100";
+              // Determine status text based on the appointment's status
+              let statusText = "";
+              switch (appointment.status) {
+                case "booked":
+                  statusText = "Appointment Booked";
+                  break;
+                case "cancelled":
+                  statusText = "Appointment Cancelled";
+                  break;
+                case "completed":
+                  statusText = "Appointment Completed";
+                  break;
+                default:
+                  statusText = "Appointment Status Unknown";
               }
 
               return (
-                <tr key={appointment._id} className={`${rowStyle} text-center`}>
-                  <td className="px-4 py-2 border">{appointment.serviceName}</td>
-                  <td className="px-4 py-2 border">{date}</td>
-                  <td className="px-4 py-2 border">{startTime}</td>
-                  <td className="px-4 py-2 border">{endTime}</td>
-                  <td className="px-4 py-2 border capitalize">{appointment.status}</td>
-                  <td className="px-4 py-2 border">
-                    {appointment.staffId?.name || "N/A"}
+                <tr key={appointment._id} className="text-center">
+                  <td className="px-4 py-2">{formattedDate}</td>
+                  <td className="px-4 py-2">{statusText}</td>
+                  <td className="px-4 py-2">
+                    {appointment.description || "—"} {/* Show description or default "—" */}
                   </td>
-                  <td className="px-4 py-2 border">${appointment.totalBill}</td>
                 </tr>
               );
             })}

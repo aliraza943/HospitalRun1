@@ -7,10 +7,10 @@ const ClientNotes = ({ client }) => {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
-  // Track which notes are expanded
+
   const [expandedNotes, setExpandedNotes] = useState({});
 
-  // Function to fetch notes from the backend
+
   const fetchNotes = async () => {
     try {
       const response = await axios.get(
@@ -23,7 +23,7 @@ const ClientNotes = ({ client }) => {
     }
   };
 
-  // Fetch client notes on component mount
+
   useEffect(() => {
     fetchNotes();
   }, [client._id]);

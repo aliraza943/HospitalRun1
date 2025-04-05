@@ -11,17 +11,13 @@ const EventDetailsModal = ({
   handleDeleteEvent,
   workingHours,
   staffservices,
-  staff, // Array of service IDs that belong to the staff member
+  staff,
 }) => {
-  // State for time range and working day check
   const [timeRange, setTimeRange] = useState([{ min: "09:00", max: "18:00" }]);
   const [isWorkingDay, setIsWorkingDay] = useState(true);
-  // State for available services fetched from API
   const [services, setServices] = useState([]);
-  // State for available clients fetched from API
   const [clients, setClients] = useState([]);
 
-  // Helper: Convert time in "HH:MM AM/PM" to "HH:MM" 24-hour format
   const convertTo24Hour = (time) => {
     const [hours, minutes] = time.split(":");
     const [min, period] = minutes.split(" ");
@@ -31,7 +27,6 @@ const EventDetailsModal = ({
     return `${String(hour24).padStart(2, "0")}:${min}`;
   };
 
-  // Helper: Get working hours for a day from workingHours prop
   const getWorkingHoursForDay = (day) => {
     const hours = workingHours[day];
     if (!hours || hours.length === 0) return null;
@@ -41,12 +36,10 @@ const EventDetailsModal = ({
     });
   };
 
-  // Calculate duration (in minutes) between two dates
   const calculateDuration = (start, end) => {
     return (new Date(end) - new Date(start)) / (1000 * 60);
   };
 
-  // Initialize time range when modal opens or selectedEvent changes
   useEffect(() => {
     if (showEventDetailsModal && selectedEvent && selectedEvent.start) {
       const eventDate = new Date(selectedEvent.start);
@@ -54,7 +47,7 @@ const EventDetailsModal = ({
       const workingTimeSlots = getWorkingHoursForDay(dayOfWeek);
       if (!workingTimeSlots) {
         setIsWorkingDay(false);
-        setTimeRange([]); // Non-working day
+        setTimeRange([]);
       } else {
         setIsWorkingDay(true);
         setTimeRange(workingTimeSlots);
@@ -62,7 +55,6 @@ const EventDetailsModal = ({
     }
   }, [showEventDetailsModal, selectedEvent, workingHours]);
 
-  // Fetch services from the API on mount
   useEffect(() => {
     const fetchServices = async () => {
       try {
@@ -85,9 +77,8 @@ const EventDetailsModal = ({
     fetchServices();
   }, []);
 
-  // Fetch client data using staff._id
   useEffect(() => {
-    if (!staff?._id) return; // Ensure staff._id is available
+    if (!staff?._id) return;
     const fetchClients = async () => {
       try {
         const response = await fetch(
@@ -101,7 +92,6 @@ const EventDetailsModal = ({
         );
         if (!response.ok) throw new Error("Failed to fetch client data");
         const data = await response.json();
-        console.log("Clients Data fetched:", data);
         setClients(data);
       } catch (error) {
         console.error("Error fetching client data:", error);
@@ -110,13 +100,11 @@ const EventDetailsModal = ({
     fetchClients();
   }, [staff?._id]);
 
-  // Filter only services assigned to the staff
   const filteredServices =
     staffservices && staffservices.length > 0
       ? services.filter((s) => staffservices.includes(s._id))
       : services;
 
-  // Handle date change and update working hours accordingly
   const handleDateChange = (e) => {
     const newDate = e.target.value;
     const dayOfWeek = new Date(newDate).toLocaleString("en-US", {
@@ -143,7 +131,6 @@ const EventDetailsModal = ({
     });
   };
 
-  // Handle time changes for start/end times
   const handleTimeChange = (e, field) => {
     const newTime = e.target.value;
     const [hour, minute] = newTime.split(":");
@@ -155,7 +142,6 @@ const EventDetailsModal = ({
     });
   };
 
-  // Custom confirmation using a toast
   const confirmAndSubmit = () => {
     toast(
       ({ closeToast }) => (
@@ -199,37 +185,40 @@ const EventDetailsModal = ({
       }
     );
   };
-  // Save the event details after validation
+
   const handleSave = () => {
-    if (!selectedEvent.clientName || !selectedEvent.clientId || !selectedEvent.serviceType) {
+    if (
+      !selectedEvent.clientName ||
+      !selectedEvent.clientId ||
+      !selectedEvent.serviceType ||
+      !selectedEvent.description
+    ) {
       toast.error("Please fill the form");
       return;
     }
+
     if (!isWorkingDay) {
       toast.error("You cannot save an event on a non-working day.");
       return;
     }
-  
-    // Check if start time is before end time
+
     if (new Date(selectedEvent.start) >= new Date(selectedEvent.end)) {
       toast.error("Start time must be before end time.");
       return;
     }
-  
+
     if (selectedEvent.start && selectedEvent.end) {
       const duration = calculateDuration(selectedEvent.start, selectedEvent.end);
       const expectedDuration = selectedEvent.serviceDuration || 40;
-      // If the duration is not equal to the expected duration, show confirmation toast
       if (duration !== expectedDuration) {
         confirmAndSubmit();
-        return; // Exit early until confirmation
+        return;
       }
     }
-    // If duration is fine, proceed with update
+
     handleUpdateEvent();
   };
 
-  // Helper: Format a date string to HH:MM for input[type="time"]
   const formatTimeForInput = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -285,7 +274,6 @@ const EventDetailsModal = ({
                 serviceType: selectedService.name,
                 serviceCharges: selectedService.price,
                 serviceId: selectedService._id,
-                // Assume service object includes a duration field (default to 40 if not provided)
                 serviceDuration: selectedService.duration || 40,
               });
             } else {
@@ -308,13 +296,26 @@ const EventDetailsModal = ({
           ))}
         </select>
 
-        {/* Charges (auto-populated based on service selection) */}
+        {/* Charges */}
         <label className="block text-gray-700 font-semibold">Charges:</label>
         <input
           type="number"
           className="w-full p-2 border rounded mb-2"
           value={selectedEvent.serviceCharges}
           readOnly
+        />
+
+        {/* Description */}
+        <label className="block text-gray-700 font-semibold">Description:</label>
+        <input
+          type="text"
+          className="w-full p-2 border rounded mb-2"
+          placeholder="Enter description"
+          value={selectedEvent.description || ""}
+          onChange={(e) =>
+            setSelectedEvent({ ...selectedEvent, description: e.target.value })
+          }
+          required
         />
 
         {/* Date Input */}
@@ -330,7 +331,6 @@ const EventDetailsModal = ({
           onChange={handleDateChange}
         />
 
-        {/* Time Inputs (only show if it's a working day) */}
         {isWorkingDay && timeRange.length > 0 && (
           <>
             <label className="block text-gray-700 font-semibold">Start Time:</label>
@@ -380,8 +380,6 @@ const EventDetailsModal = ({
             Save
           </button>
         </div>
-
-
       </div>
     </div>
   );

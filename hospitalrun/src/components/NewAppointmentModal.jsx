@@ -88,7 +88,9 @@ const NewAppointmentModal = ({
       // Ensure newEvent.start exists and parse it as a Date
       const startDate = new Date(newEvent.start);
       // Assuming service duration is in minutes:
-      const endDate = new Date(startDate.getTime() + selectedService.duration * 60000);
+      const endDate = new Date(
+        startDate.getTime() + selectedService.duration * 60000
+      );
       setNewEvent({
         ...newEvent,
         serviceType: selectedService.name, // set the service name
@@ -187,7 +189,6 @@ const NewAppointmentModal = ({
           readOnly
         />
 
-        {/* Display the duration */}
         <label className="block text-sm font-medium mb-1">
           Duration (minutes)
         </label>
@@ -196,6 +197,17 @@ const NewAppointmentModal = ({
           className="w-full p-2 border rounded mb-4"
           value={newEvent.duration || ""}
           readOnly
+        />
+
+        {/* New Description Input */}
+        <label className="block text-sm font-medium mb-1">Description</label>
+        <textarea
+          className="w-full p-2 border rounded mb-4"
+          value={newEvent.description || ""}
+          onChange={(e) =>
+            setNewEvent({ ...newEvent, description: e.target.value })
+          }
+          placeholder="Enter appointment description..."
         />
 
         <div className="flex justify-end">

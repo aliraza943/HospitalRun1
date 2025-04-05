@@ -3,6 +3,8 @@ import { Sidebar, Menu, MenuItem, SubMenu } from 'react-pro-sidebar';
 import { myLogo } from '../assets/images';
 import './../styles/sidebar.css';
 import { Link, useNavigate } from 'react-router-dom';
+// Importing icons from React Icons
+import { FaHome, FaCalendarAlt, FaUsers, FaClipboardList, FaUserShield, FaSignOutAlt } from 'react-icons/fa';
 
 const SidebarComp = () => {
   const navigate = useNavigate();
@@ -65,40 +67,55 @@ const SidebarComp = () => {
       <Sidebar className="sidebar">
         <img src={myLogo} alt="Logo" className="sidebar-logo" />
         <Menu>
-          <MenuItem>
+          <MenuItem icon={<FaHome />}>
             <Link to="/">Home</Link>
           </MenuItem>
           {isprovider && (
             <SubMenu
               label="Schedule"
+              icon={<FaCalendarAlt />}
               open={activeSubmenu === 'Schedule'}
               onOpenChange={() => toggleSubMenu('Schedule')}
             >
-              <MenuItem onClick={handleScheduleNavigation}>View My Schedule</MenuItem>
-              <MenuItem onClick={handleAvailabilityNavigation}>Set My Availability</MenuItem>
+              <MenuItem onClick={handleScheduleNavigation}>
+                View My Schedule
+              </MenuItem>
+              <MenuItem onClick={handleAvailabilityNavigation}>
+                Set My Availability
+              </MenuItem>
             </SubMenu>
           )}
           {(isprovider || hasManageClientele) && (
             <SubMenu
               label="Clientele"
+              icon={<FaUsers />}
               open={activeSubmenu === 'Clientele'}
               onOpenChange={() => toggleSubMenu('Clientele')}
             >
               {isprovider ? (
-                <MenuItem><Link to="/providerViewClientele">View Clientele</Link></MenuItem>
+                <MenuItem>
+                  <Link to="/providerViewClientele">View Clientele</Link>
+                </MenuItem>
               ) : (
-                <MenuItem><Link to="/adminViewClientele">View Clientele</Link></MenuItem>
+                <MenuItem>
+                  <Link to="/adminViewClientele">View Clientele</Link>
+                </MenuItem>
               )}
             </SubMenu>
           )}
           {isFrontDesk && !isprovider && (
             <SubMenu
               label="Front Desk"
+              icon={<FaClipboardList />}
               open={activeSubmenu === 'Front Desk'}
               onOpenChange={() => toggleSubMenu('Front Desk')}
             >
-              <MenuItem><Link to="/viewStaffCalendar">View Schedules</Link></MenuItem>
-              <MenuItem><Link to="/frontDeskCheckout">Checkout</Link></MenuItem>
+              <MenuItem>
+                <Link to="/viewStaffCalendar">View Schedules</Link>
+              </MenuItem>
+              <MenuItem>
+                <Link to="/frontDeskCheckout">Checkout</Link>
+              </MenuItem>
             </SubMenu>
           )}
           {(isAdmin || (isFrontDesk && (
@@ -108,24 +125,35 @@ const SidebarComp = () => {
           ))) && (
             <SubMenu
               label="Admin"
+              icon={<FaUserShield />}
               open={activeSubmenu === 'Admin'}
               onOpenChange={() => toggleSubMenu('Admin')}
             >
               {(isAdmin || user?.permissions?.includes("manage_services")) && (
-                <MenuItem><Link to="/viewServices">View Services</Link></MenuItem>
+                <MenuItem>
+                  <Link to="/viewServices">View Services</Link>
+                </MenuItem>
               )}
               {(isAdmin || user?.permissions?.includes("manage_businessHours")) && (
-                <MenuItem><Link to="/adminCalendar">View Calendar</Link></MenuItem>
+                <MenuItem>
+                  <Link to="/adminCalendar">View Calendar</Link>
+                </MenuItem>
               )}
               {(isAdmin || user?.permissions?.includes("manage_staff")) && (
-                <MenuItem><Link to="/viewStaff">View Staff</Link></MenuItem>
+                <MenuItem>
+                  <Link to="/viewStaff">View Staff</Link>
+                </MenuItem>
               )}
               {(isAdmin || user?.permissions?.includes("manage_products")) && (
-                <MenuItem><Link to="/viewProducts">View Products</Link></MenuItem>
+                <MenuItem>
+                  <Link to="/viewProducts">View Products</Link>
+                </MenuItem>
               )}
             </SubMenu>
           )}
-          <MenuItem onClick={handleLogout}>Logout</MenuItem>
+          <MenuItem icon={<FaSignOutAlt />} onClick={handleLogout}>
+            Logout
+          </MenuItem>
         </Menu>
       </Sidebar>
     </div>

@@ -147,7 +147,8 @@ const ViewStaffComp = () => {
       start: formattedStartUTC.toDate(),
       end: formattedEndUTC.toDate(),
       clientId: newEvent.clientId,
-      serviceId:newEvent.serviceId
+      serviceId:newEvent.serviceId,
+      description:newEvent.description
     };
 
     try {
@@ -431,6 +432,7 @@ const ViewStaffComp = () => {
           end: endUTC,
           staffId: selectedEvent.staffId,
           clientId: selectedEvent.clientId,
+          description:selectedEvent.description
         }),
       });
 

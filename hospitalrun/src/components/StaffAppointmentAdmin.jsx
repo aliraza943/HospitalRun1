@@ -139,7 +139,8 @@ const ViewStaffCompAdmin = ({ staff }) => {
       start: formattedStartUTC.toDate(), // Convert back to Date for server
       end: formattedEndUTC.toDate(),
       clientId: newEvent.clientId,
-      serviceId:newEvent.serviceId
+      serviceId:newEvent.serviceId,
+      description:newEvent.description
     };
 
     try {
@@ -444,7 +445,8 @@ const ViewStaffCompAdmin = ({ staff }) => {
           start: startUTC,
           end: endUTC,
           staffId: selectedEvent.staffId,
-          clientId: selectedEvent.clientId
+          clientId: selectedEvent.clientId,
+          description:selectedEvent.description
         }),
       });
 
