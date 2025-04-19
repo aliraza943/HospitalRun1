@@ -4,7 +4,12 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}", // Include all React component files
   ],
   theme: {
-    extend: {}, // Customize the theme if needed
+    extend: {
+      fontFamily: {
+        cursive: ['"Comic Sans MS"', 'cursive'],
+        fantasy: ['"Papyrus"', 'fantasy'],
+      },
+    },
   },
   plugins: [],
 };

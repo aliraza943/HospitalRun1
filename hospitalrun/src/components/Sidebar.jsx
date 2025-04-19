@@ -118,39 +118,46 @@ const SidebarComp = () => {
               </MenuItem>
             </SubMenu>
           )}
-          {(isAdmin || (isFrontDesk && (
-            user?.permissions?.includes("manage_staff") ||
-            user?.permissions?.includes("manage_services") ||
-            user?.permissions?.includes("manage_businessHours")
-          ))) && (
-            <SubMenu
-              label="Admin"
-              icon={<FaUserShield />}
-              open={activeSubmenu === 'Admin'}
-              onOpenChange={() => toggleSubMenu('Admin')}
-            >
-              {(isAdmin || user?.permissions?.includes("manage_services")) && (
-                <MenuItem>
-                  <Link to="/viewServices">View Services</Link>
-                </MenuItem>
-              )}
-              {(isAdmin || user?.permissions?.includes("manage_businessHours")) && (
-                <MenuItem>
-                  <Link to="/adminCalendar">View Calendar</Link>
-                </MenuItem>
-              )}
-              {(isAdmin || user?.permissions?.includes("manage_staff")) && (
-                <MenuItem>
-                  <Link to="/viewStaff">View Staff</Link>
-                </MenuItem>
-              )}
-              {(isAdmin || user?.permissions?.includes("manage_products")) && (
-                <MenuItem>
-                  <Link to="/viewProducts">View Products</Link>
-                </MenuItem>
-              )}
-            </SubMenu>
-          )}
+      {(isAdmin || (isFrontDesk && (
+  user?.permissions?.includes("manage_staff") ||
+  user?.permissions?.includes("manage_services") ||
+  user?.permissions?.includes("manage_businessHours") ||
+  user?.permissions?.includes("manage_site")
+))) && (
+  <SubMenu
+    label="Admin"
+    icon={<FaUserShield />}
+    open={activeSubmenu === 'Admin'}
+    onOpenChange={() => toggleSubMenu('Admin')}
+  >
+    {(isAdmin || user?.permissions?.includes("manage_services")) && (
+      <MenuItem>
+        <Link to="/viewServices">View Services</Link>
+      </MenuItem>
+    )}
+    {(isAdmin || user?.permissions?.includes("manage_businessHours")) && (
+      <MenuItem>
+        <Link to="/adminCalendar">View Calendar</Link>
+      </MenuItem>
+    )}
+    {(isAdmin || user?.permissions?.includes("manage_staff")) && (
+      <MenuItem>
+        <Link to="/viewStaff">View Staff</Link>
+      </MenuItem>
+    )}
+    {(isAdmin || user?.permissions?.includes("manage_products")) && (
+      <MenuItem>
+        <Link to="/viewProducts">View Products</Link>
+      </MenuItem>
+    )}
+    {(isAdmin || user?.permissions?.includes("manage_site")) && (
+      <MenuItem>
+        <Link to="/manageSite">Manage Site</Link>
+      </MenuItem>
+    )}
+  </SubMenu>
+)}
+
           <MenuItem icon={<FaSignOutAlt />} onClick={handleLogout}>
             Logout
           </MenuItem>

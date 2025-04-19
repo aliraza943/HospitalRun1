@@ -22,6 +22,8 @@ import AdminViewClientele from "./pages/Clientele/ViewAdminClientele"
 import ViewCashier from './pages/staff/Cashier';
 import ViewProducts from './pages/products/ViewProducts';
 import AddProducts from './pages/products/AddProducts';
+import ManageSite from './pages/Site/manageSite';
+import SiteSetup from './pages/Site/SiteDetail';
 const App = () => {
   return (
     <Router>
@@ -45,7 +47,9 @@ const App = () => {
         <Route path="/viewProducts" element={<ViewProducts />} />
         <Route path="/AddProducts" element={<AddProducts />} />
         <Route path="/clientDetails" element={<ClienteleDetails />} />
-        
+        <Route path="/manageSite" element={<ManageSite />} />
+         
+        <Route path="/siteSetup" element={<SiteSetup />} />
 
       </Routes>
 

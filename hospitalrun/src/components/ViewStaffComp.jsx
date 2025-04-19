@@ -12,7 +12,8 @@ const permissionOptions = [
   "modify_working_hours",
   "manage_appointments",
   "manage_clientele",
-  "manage_products", // New permission added
+  "manage_products",
+  "manage_site" // New permission added
 ];
 
 const ViewStaffComp = () => {
