@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { FcCollapse, FcExpand } from "react-icons/fc";
 
 const ClientNotes = ({ client }) => {
   const [notes, setNotes] = useState([]);
@@ -143,11 +144,11 @@ const ClientNotes = ({ client }) => {
                         style={
                           !expandedNotes[index]
                             ? {
-                                display: "-webkit-box",
-                                WebkitLineClamp: 3,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                              }
+                              display: "-webkit-box",
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }
                             : {}
                         }
                       >
@@ -159,7 +160,8 @@ const ClientNotes = ({ client }) => {
                         onClick={() => toggleExpanded(index)}
                         className="text-blue-500 ml-2 focus:outline-none"
                       >
-                        {expandedNotes[index] ? "▲" : "▼"}
+                        {expandedNotes[index] ? <FcCollapse />
+                          : <FcExpand />}
                       </button>
                     )}
                   </div>
