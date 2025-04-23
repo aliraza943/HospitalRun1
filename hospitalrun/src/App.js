@@ -24,6 +24,7 @@ import ViewProducts from './pages/products/ViewProducts';
 import AddProducts from './pages/products/AddProducts';
 import ManageSite from './pages/Site/manageSite';
 import SiteSetup from './pages/Site/SiteDetail';
+import MeetOurTeam from './pages/Site/MeetOurTeam';
 const App = () => {
   return (
     <Router>
@@ -50,7 +51,7 @@ const App = () => {
         <Route path="/manageSite" element={<ManageSite />} />
          
         <Route path="/siteSetup" element={<SiteSetup />} />
-
+        <Route path="/MeetOurTeam" element={<MeetOurTeam />} />
       </Routes>
 
     </Router>

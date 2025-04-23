@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function SocialLinksForm() {
   const [formData, setFormData] = useState({
@@ -11,6 +12,8 @@ export default function SocialLinksForm() {
   const [existingWebsite, setExistingWebsite] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchWebsiteData = async () => {
@@ -29,7 +32,6 @@ export default function SocialLinksForm() {
           setExistingWebsite(result.website);
           setFormData({
             siteName: result.website.siteName || '',
-            // ← use the slug directly; no split needed
             siteUrl: result.website.url || '',
             facebook: result.website.socialLinks?.facebook || '',
             instagram: result.website.socialLinks?.instagram || '',
@@ -101,6 +103,16 @@ export default function SocialLinksForm() {
         </div>
       )}
 
+      {/* Go to Meet Our Team Button */}
+      <button
+  type="button"
+  onClick={() => window.location.href = 'http://localhost:3000/meetOurTeam'}
+  className="px-4 py-2 bg-green-600 text-white rounded-md mb-4"
+>
+  Setup Your Team Page
+</button>
+
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Site Name */}
         <div>
@@ -124,9 +136,7 @@ export default function SocialLinksForm() {
             Site URL
           </label>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-gray-600">
-              http://localhost:5173/
-            </span>
+            <span className="text-gray-600">http://localhost:5173/</span>
             <input
               type="text"
               id="siteUrl"

@@ -153,6 +153,8 @@ const SidebarComp = () => {
     {(isAdmin || user?.permissions?.includes("manage_site")) && (
       <MenuItem>
         <Link to="/manageSite">Manage Site</Link>
+       
+        
       </MenuItem>
     )}
   </SubMenu>
