@@ -4,11 +4,9 @@ import { useNavigate } from 'react-router-dom';
 const TeamSetup = () => {
   const navigate = useNavigate();
   const [staffList, setStaffList] = useState([]);
-  const [cards, setCards] = useState([
-    { staffId: '', description: '', image: null, preview: null },
-    { staffId: '', description: '', image: null, preview: null },
-    { staffId: '', description: '', image: null, preview: null },
-  ]);
+  const [cards, setCards] = useState(Array(6).fill().map(() => ({
+    staffId: '', description: '', image: null, preview: null
+  })));
   const [confirmedData, setConfirmedData] = useState(null);
 
   const token = localStorage.getItem('token');
@@ -24,11 +22,11 @@ const TeamSetup = () => {
     })
       .then(res => {
         if (res.status === 401) {
-          navigate("/unauthorized", { state: { message: "Token expired. Please log in again." }});
+          navigate("/unauthorized", { state: { message: "Token expired. Please log in again." } });
           return null;
         }
         if (res.status === 403) {
-          navigate("/unauthorized", { state: { message: "Not authorized to manage staff." }});
+          navigate("/unauthorized", { state: { message: "Not authorized to manage staff." } });
           return null;
         }
         return res.json();
@@ -51,7 +49,7 @@ const TeamSetup = () => {
       .then(res => res.json())
       .then(data => {
         let loadedCards = [];
-  
+
         if (data.success && data.cards && data.cards.length) {
           loadedCards = data.cards.map(card => ({
             staffId: card.staffId?._id || card.staffId,
@@ -61,9 +59,9 @@ const TeamSetup = () => {
             existingImage: card.image || '',
           }));
         }
-  
-        // Ensure there are 3 cards (fill with empty ones if needed)
-        while (loadedCards.length < 3) {
+
+        // Ensure there are 6 cards (fill with empty ones if needed)
+        while (loadedCards.length < 6) {
           loadedCards.push({
             staffId: '',
             description: '',
@@ -72,12 +70,12 @@ const TeamSetup = () => {
             existingImage: '',
           });
         }
-  
+
         setCards(loadedCards);
       })
       .catch(console.error);
   }, []);
-  
+
   const handleChange = (index, field, value) => {
     const updated = [...cards];
     updated[index][field] = value;
@@ -97,33 +95,30 @@ const TeamSetup = () => {
   };
 
   const handleConfirm = () => {
-    // Create a copy of the cards data for sending to the server
     const meta = cards.map((card, index) => ({
-      index: index, // Add index to track position
+      index: index,
       staffId: card.staffId || '',
       description: card.description || '',
-      image: card.existingImage || '', // Send existing image path if no new image
+      image: card.existingImage || '',
       name: (() => {
         const s = staffList.find(x => x._id === card.staffId);
         return s ? s.name : '';
       })()
     }));
-  
+
     const formData = new FormData();
     formData.append('cards', JSON.stringify(meta));
-    
-    // Add images to form data with index to ensure correct order
+
     cards.forEach((card, index) => {
       if (card.image) {
         formData.append('images', card.image);
         formData.append('imageIndices', index);
       }
     });
-  
-    // Log what's being sent
+
     console.log("Sending cards meta:", meta);
     console.log("Uploading images:", cards.filter(card => card.image).map(c => c.image?.name));
-  
+
     fetch('http://localhost:8080/api/website/save-cards', {
       method: 'POST',
       headers: {
@@ -141,12 +136,12 @@ const TeamSetup = () => {
       })
       .catch(console.error);
   };
-  
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h2 className="text-2xl font-bold mb-6">Meet Your Team</h2>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card, idx) => (
           <div key={idx} className="bg-white rounded-lg shadow p-4">
             <label className="block text-sm font-medium mb-1">Select Provider:</label>
@@ -177,7 +172,6 @@ const TeamSetup = () => {
               className="mb-4"
             />
 
-            {/* Preview for new uploaded image */}
             {card.image && card.preview && (
               <img
                 src={card.preview}
@@ -185,8 +179,7 @@ const TeamSetup = () => {
                 className="w-full h-40 object-cover rounded"
               />
             )}
-            
-            {/* Preview for existing image */}
+
             {!card.image && card.existingImage && (
               <img
                 src={`http://localhost:8080${card.existingImage}`}
