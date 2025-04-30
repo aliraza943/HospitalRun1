@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Define the permission options for frontdesk users, including manage_products.
 const permissionOptions = [
   "manage_services",
   "manage_staff",
@@ -32,11 +31,43 @@ const ViewStaffComp = () => {
     // For providers, services is an array of selected service IDs.
     services: [],
   });
+  
+  const [imagePreview, setImagePreview] = useState(null);
   const [services, setServices] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch staff list from API
+  const fetchStaffList = () => {
+    fetch("http://localhost:8080/api/staff", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          navigate("/unauthorized", {
+            state: { message: "Your token expired. Please log back in." },
+          });
+          return null;
+        }
+        if (res.status === 403) {
+          navigate("/unauthorized", {
+            state: { message: "You are not authorized to manage staff." },
+          });
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          setStaffList(data);
+          setFilteredStaff(data);
+        }
+      })
+      .catch((err) => console.error("Error fetching staff:", err));
+  };
   useEffect(() => {
     fetch("http://localhost:8080/api/staff", {
       method: "GET",
@@ -89,13 +120,33 @@ const ViewStaffComp = () => {
   useEffect(() => {
     setFilteredStaff(
       staffList.filter(
-        (staff) =>
-          staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          staff.role.toLowerCase().includes(searchQuery.toLowerCase())
+        (staff) => {
+          const query = searchQuery.toLowerCase();
+          return (
+            (staff.name && staff.name.toLowerCase().includes(query)) ||
+            (staff.email && staff.email.toLowerCase().includes(query)) ||
+            (staff.role && staff.role.toLowerCase().includes(query))
+          );
+        }
       )
     );
   }, [searchQuery, staffList]);
+
+  const handleImageUpload = (file) => {
+    if (!file) return;
+  
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result); // Set preview from FileReader result
+    };
+    reader.readAsDataURL(file); // This triggers the onloadend event when complete
+    
+    setUpdatedStaff((prev) => ({
+      ...prev,
+      imageFile: file, // Store the File object for uploading
+    }));
+  };
+  
 
   // Delete staff member
   const handleDelete = async (id) => {
@@ -124,6 +175,9 @@ const ViewStaffComp = () => {
   const handleEdit = (staff) => {
     setEditingStaff(staff._id);
     const updatedStaffData = { ...staff };
+
+    // Reset image preview when opening edit modal
+    setImagePreview(null);
 
     if (staff.role === "frontdesk") {
       let permissionsObj = {};
@@ -161,33 +215,58 @@ const ViewStaffComp = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      // For frontdesk, convert permissions object to an array.
-      let payload = { ...updatedStaff };
-      if (updatedStaff.role === "frontdesk") {
-        payload.permissions = Object.entries(updatedStaff.permissions)
-          .filter(([key, value]) => value)
-          .map(([key]) => key);
+      const formData = new FormData();
+  
+      formData.append("name", updatedStaff.name);
+      formData.append("email", updatedStaff.email);
+      formData.append("phone", updatedStaff.phone);
+      formData.append("role", updatedStaff.role);
+  
+      if (updatedStaff.role === "provider") {
+        updatedStaff.services.forEach((serviceId) =>
+          formData.append("services", serviceId)
+        );
       }
+  
+      if (updatedStaff.role === "frontdesk") {
+        const allowedPerms = Object.entries(updatedStaff.permissions)
+          .filter(([_, value]) => value)
+          .map(([key]) => key);
+        formData.append("permissions", JSON.stringify(allowedPerms));
+      }
+  
+      // Attach image file if uploaded
+      if (updatedStaff.imageFile) {
+        formData.append("image", updatedStaff.imageFile); // Attach File object
+      }
+  
       const res = await fetch(`http://localhost:8080/api/staff/${editingStaff}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(payload),
+        body: formData,
       });
-
+  
       if (!res.ok) throw new Error("Failed to update");
-
-      setStaffList(staffList.map((s) => (s._id === editingStaff ? payload : s)));
+  
+      const updated = await res.json(); // Get updated record from response
+      
+      // Update staff list with newly updated staff data
+     fetchStaffList();
+      
+      // Reset states
       setEditingStaff(null);
       setIsModalOpen(false);
+      setImagePreview(null);
+      
       toast.success("Staff updated successfully!");
     } catch (error) {
       console.error("Error updating staff:", error);
       toast.error("Failed to update staff.");
     }
   };
+  
 
   // Navigate to schedule view
   const handleSchedule = (staff) => {
@@ -212,6 +291,13 @@ const ViewStaffComp = () => {
     }
   };
 
+  // Close modal and reset states
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingStaff(null);
+    setImagePreview(null);
+  };
+
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
       <ToastContainer />
@@ -232,10 +318,10 @@ const ViewStaffComp = () => {
         onChange={(e) => setSearchQuery(e.target.value)}
         className="w-full p-2 mb-4 border rounded"
       />
-
       <table className="w-full border-collapse text-center border border-gray-300">
         <thead>
           <tr className="bg-gray-200">
+            <th className="border p-2">Image</th>
             <th className="border p-2">Name</th>
             <th className="border p-2">Email</th>
             <th className="border p-2">Phone</th>
@@ -246,6 +332,19 @@ const ViewStaffComp = () => {
         <tbody>
           {filteredStaff.map((staff) => (
             <tr key={staff._id} className="border">
+              <td className="border p-2">
+                {staff.image ? (
+                  <img
+                    src={`http://localhost:8080${staff.image}`}
+                    alt={staff.name}
+                    className="w-10 h-10 rounded-full mx-auto object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gray-400 text-white flex items-center justify-center mx-auto">
+                    {staff.name?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </td>
               <td className="border p-2">{staff.name}</td>
               <td className="border p-2">{staff.email}</td>
               <td className="border p-2">{staff.phone}</td>
@@ -310,11 +409,11 @@ const ViewStaffComp = () => {
                 }
                 className="w-full p-2 border rounded"
               >
-                <option value="provider">provider/Provider</option>
+                <option value="provider">Provider</option>
                 <option value="frontdesk">Front Desk</option>
               </select>
 
-              {/* Checkboxes for Service Selection for provider Role */}
+              {/* Services for provider role */}
               {updatedStaff.role === "provider" && (
                 <div className="mt-4">
                   <label className="block mb-1 font-medium">Services</label>
@@ -333,7 +432,7 @@ const ViewStaffComp = () => {
                 </div>
               )}
 
-              {/* Permissions for Frontdesk Role */}
+              {/* Permissions for frontdesk role */}
               {updatedStaff.role === "frontdesk" && (
                 <div className="mt-4">
                   <label className="block mb-1 font-medium">Permissions</label>
@@ -365,10 +464,42 @@ const ViewStaffComp = () => {
                 </div>
               )}
 
+              {/* Staff Image Upload */}
+              <div className="mt-4">
+                <label className="block mb-1 font-medium">Profile Image</label>
+
+                {/* Show preview if image is selected or already exists */}
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Staff Preview"
+                    className="w-24 h-24 object-cover rounded-full mb-2"
+                  />
+                ) : updatedStaff.image ? (
+                  <img
+                    src={`http://localhost:8080${updatedStaff.image}`}
+                    alt="Staff Preview"
+                    className="w-24 h-24 object-cover rounded-full mb-2"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                    <span className="text-gray-500 text-xl">No Image</span>
+                  </div>
+                )}
+
+                {/* File input for uploading new image */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e.target.files[0])}
+                  className="block w-full text-sm text-gray-500 mt-2"
+                />
+              </div>
+
               <div className="flex justify-end space-x-2">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={handleCloseModal}
                   className="bg-gray-500 text-white px-4 py-2 rounded"
                 >
                   Cancel

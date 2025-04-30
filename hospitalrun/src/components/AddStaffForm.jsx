@@ -1,30 +1,33 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 
 const AddStaffForm = () => {
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
   const [staff, setStaff] = useState({
     name: "",
     email: "",
     phone: "",
     role: "provider",
-    workingHours: "", // This can be removed or left for non-providers
+    workingHours: "",
     permissions: [],
-    services: [], // For providers, we'll push selected service IDs here
+    services: [],
   });
 
+  const [imageFile, setImageFile] = useState(null); // <-- store uploaded file
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [fetchedServices, setFetchedServices] = useState([]); // Services fetched from API
+  const [fetchedServices, setFetchedServices] = useState([]);
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setStaff((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle checkbox changes for permissions (for front desk)
+  const handleImageChange = (e) => {
+    setImageFile(e.target.files[0]); // <-- save the uploaded file
+  };
+
   const handlePermissionsChange = (e) => {
     const { value, checked } = e.target;
     setStaff((prev) => ({
@@ -35,7 +38,6 @@ const AddStaffForm = () => {
     }));
   };
 
-  // Handle service checkbox changes for providers
   const handleServiceCheckboxChange = (e) => {
     const { value, checked } = e.target;
     setStaff((prev) => ({
@@ -46,23 +48,36 @@ const AddStaffForm = () => {
     }));
   };
 
-  // Submit form data to the backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
+      const formData = new FormData();
+      formData.append("name", staff.name);
+      formData.append("email", staff.email);
+      formData.append("phone", staff.phone);
+      formData.append("role", staff.role);
+      formData.append("workingHours", staff.workingHours);
+      formData.append("permissions", JSON.stringify(staff.permissions));
+      formData.append("services", JSON.stringify(staff.services));
+
+      if (imageFile) {
+        formData.append("image", imageFile); // <-- attach file
+      }
+
       const response = await axios.post(
         "http://localhost:8080/api/staff/add",
-        staff, // Pass staff as request body
+        formData,
         {
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Include token if required
+            "Content-Type": "multipart/form-data", // <-- important
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
+
       setMessage(response.data.message);
       setStaff({
         name: "",
@@ -73,6 +88,8 @@ const AddStaffForm = () => {
         permissions: [],
         services: [],
       });
+      setImageFile(null);
+
       setTimeout(() => navigate("/viewStaff"), 1000);
     } catch (error) {
       setMessage(error.response?.data?.message || "Failed to add staff!");
@@ -81,7 +98,6 @@ const AddStaffForm = () => {
     }
   };
 
-  // For providers, fetch services from API
   useEffect(() => {
     if (staff.role === "provider") {
       const fetchServices = async () => {
@@ -120,7 +136,7 @@ const AddStaffForm = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
         {/* Name */}
         <div>
           <label className="block text-gray-700">Name</label>
@@ -160,7 +176,20 @@ const AddStaffForm = () => {
           />
         </div>
 
-        {/* Role Selection */}
+        {/* Upload Image */}
+        <div>
+          <label className="block text-gray-700">
+            Upload Image <span className="text-gray-400 text-sm">(optional)</span>
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
+        {/* Role */}
         <div>
           <label className="block text-gray-700">Role</label>
           <select
@@ -174,7 +203,7 @@ const AddStaffForm = () => {
           </select>
         </div>
 
-        {/* For provider Role: Show service checkboxes */}
+        {/* Provider Services */}
         {staff.role === "provider" && (
           <div>
             <label className="block text-gray-700 font-semibold mb-2">
@@ -200,87 +229,36 @@ const AddStaffForm = () => {
           </div>
         )}
 
-        {/* Permissions - Only for Front Desk */}
+        {/* Front Desk Permissions */}
         {staff.role === "frontdesk" && (
           <div>
             <label className="block text-gray-700">Permissions</label>
             <div className="flex flex-col gap-2">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  value="manage_services"
-                  checked={staff.permissions.includes("manage_services")}
-                  onChange={handlePermissionsChange}
-                  className="mr-2"
-                />
-                Manage Services
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  value="manage_staff"
-                  checked={staff.permissions.includes("manage_staff")}
-                  onChange={handlePermissionsChange}
-                  className="mr-2"
-                />
-                Manage Staff
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  value="manage_businessHours"
-                  checked={staff.permissions.includes("manage_businessHours")}
-                  onChange={handlePermissionsChange}
-                  className="mr-2"
-                />
-                Manage Business Hours
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  value="modify_working_hours"
-                  checked={staff.permissions.includes("modify_working_hours")}
-                  onChange={handlePermissionsChange}
-                  className="mr-2"
-                />
-                Modify Working Hours
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  value="manage_appointments"
-                  checked={staff.permissions.includes("manage_appointments")}
-                  onChange={handlePermissionsChange}
-                  className="mr-2"
-                />
-                Manage Appointments
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  value="manage_clientele"
-                  checked={staff.permissions.includes("manage_clientele")}
-                  onChange={handlePermissionsChange}
-                  className="mr-2"
-                />
-                Manage Clientele
-              </label>
-              {/* New Permission for managing products */}
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  value="manage_products"
-                  checked={staff.permissions.includes("manage_products")}
-                  onChange={handlePermissionsChange}
-                  className="mr-2"
-                />
-                Manage Products
-              </label>
+              {[
+                { label: "Manage Services", value: "manage_services" },
+                { label: "Manage Staff", value: "manage_staff" },
+                { label: "Manage Business Hours", value: "manage_businessHours" },
+                { label: "Modify Working Hours", value: "modify_working_hours" },
+                { label: "Manage Appointments", value: "manage_appointments" },
+                { label: "Manage Clientele", value: "manage_clientele" },
+                { label: "Manage Products", value: "manage_products" },
+              ].map((permission) => (
+                <label key={permission.value} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    value={permission.value}
+                    checked={staff.permissions.includes(permission.value)}
+                    onChange={handlePermissionsChange}
+                    className="mr-2"
+                  />
+                  {permission.label}
+                </label>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
           className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
